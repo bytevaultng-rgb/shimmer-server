@@ -1,73 +1,56 @@
+const axios = require('axios'); // make sure axios is installed
 const express = require('express');
-const bodyParser = require('body-parser');
-const path = require('path');
-const fs = require('fs');
-const ffmpeg = require('fluent-ffmpeg');
-
 const app = express();
-const PORT = process.env.PORT || 10000;
 
-app.use(bodyParser.json());
-app.use('/renders', express.static(path.join(__dirname, 'renders')));
+// Middleware (if not already in your server.js)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-const fontPath = path.join(__dirname, 'fonts', 'DejaVuSans-Bold.ttf');
+// Optional: enable CORS if frontend is separate
+const cors = require('cors');
+app.use(cors());
 
-// Test route
-app.get('/render-test', (req, res) => {
-    res.json({ status: "ok", message: "Node server reachable!" });
-});
+// --- ADD THIS ROUTE ---
+app.post('/render', async (req, res) => {
+    const { recipient, template, message } = req.body;
 
-// Render MP4 or static template
-app.post('/render-video', (req, res) => {
-    const { text, id, type } = req.body; // type: "mp4" or "static"
-    const outputFile = path.join(__dirname, 'renders', `${id}.mp4`);
+    if (!recipient || !template) {
+        return res.status(400).json({ status: 'error', message: 'Missing recipient or template.' });
+    }
 
-    if (type === 'static') {
-        // Convert static PNG to MP4
-        ffmpeg(path.join(__dirname, 'templates', 'static.png'))
-            .loop(5) // 5 seconds
-            .input(path.join(__dirname, 'templates', 'glitter.png'))
-            .complexFilter([
-                { filter: 'overlay', options: { x: '(main_w-overlay_w)/2', y: '(main_h-overlay_h)/2' } },
-                { filter: 'drawtext', options: {
-                    fontfile: fontPath,
-                    text: text,
-                    fontsize: 48,
-                    fontcolor: 'white',
-                    x: '(w-text_w)/2',
-                    y: '(h-text_h)/2',
-                    shadowcolor: 'black',
-                    shadowx: 2,
-                    shadowy: 2
-                }}
-            ])
-            .output(outputFile)
-            .on('end', () => res.json({ status: 'ok', url: `/renders/${id}.mp4` }))
-            .on('error', err => res.status(500).json({ status: 'error', error: err.message }))
-            .run();
-    } else {
-        // Video template
-        ffmpeg(path.join(__dirname, 'templates', 'base.mp4'))
-            .input(path.join(__dirname, 'templates', 'glitter.png'))
-            .complexFilter([
-                { filter: 'overlay', options: { x: '(main_w-overlay_w)/2', y: '(main_h-overlay_h)/2' } },
-                { filter: 'drawtext', options: {
-                    fontfile: fontPath,
-                    text: text,
-                    fontsize: 48,
-                    fontcolor: 'white',
-                    x: '(w-text_w)/2',
-                    y: '(h-text_h)/2',
-                    shadowcolor: 'black',
-                    shadowx: 2,
-                    shadowy: 2
-                }}
-            ])
-            .output(outputFile)
-            .on('end', () => res.json({ status: 'ok', url: `/renders/${id}.mp4` }))
-            .on('error', err => res.status(500).json({ status: 'error', error: err.message }))
-            .run();
+    try {
+        // Call shimmer-server API
+        const shimmerRes = await axios.post(
+            'https://shimmer-server-25yg.onrender.com/render',
+            {
+                compositionId: template,
+                props: {
+                    recipientName: recipient,
+                    messageText: message || ''
+                }
+            },
+            { headers: { 'Content-Type': 'application/json' } }
+        );
+
+        const data = shimmerRes.data;
+
+        // Determine video URL (adjust if your server returns different field)
+        const videoUrl = data.output || `https://shimmer-server-25yg.onrender.com/download/${data.filename}`;
+
+        res.json({
+            status: 'success',
+            recipient,
+            message,
+            video_url: videoUrl
+        });
+
+    } catch (err) {
+        console.error('Shimmer server error:', err.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to render template via shimmer server.',
+            error: err.message
+        });
     }
 });
-
-app.listen(PORT, () => console.log(`Shimmer server running on port ${PORT}`));
+// --- END ROUTE ---
