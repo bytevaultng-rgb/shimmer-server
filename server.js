@@ -17,7 +17,8 @@ SERVICE_URL (e.g. https://shimmer-server-25yg.onrender.com)
 AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, S3_BUCKET (optional)
 If S3_BUCKET is not set, files will be served from /videos locally.
 */
-const SERVICE_URL = (process.env.SERVICE_URL || '').replace(/\/$/, '');
+// Trim whitespace and remove trailing slash
+const SERVICE_URL = (process.env.SERVICE_URL || '').trim().replace(/\/$/, '');
 const S3_BUCKET = process.env.S3_BUCKET || '';
 const s3Client = (S3_BUCKET && process.env.AWS_REGION && process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY)
   ? new S3Client({ region: process.env.AWS_REGION })
