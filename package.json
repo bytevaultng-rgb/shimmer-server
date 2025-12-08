@@ -1,11 +1,14 @@
 {
   "name": "shimmer-server",
   "version": "1.0.0",
+  "description": "Gifting template renderer",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "fluent-ffmpeg": "^2.1.2",
+    "body-parser": "^1.20.2"
   }
 }
