@@ -3,3 +3,8 @@ templates/*.mp4
 node_modules/
 ffmpeg-8.0.1-essentials_build/
 templates/*.mp4
+node_modules/
+.env
+.env.*
+npm-debug.log*
+yarn-error.log*
