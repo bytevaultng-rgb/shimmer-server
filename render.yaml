@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: shimmer-server
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: SERVICE_URL
+        value: "https://your-render-service-url.onrender.com"
+    mounts:
+      - type: volume
+        name: videos
+        path: /opt/render/project/src/public/videos

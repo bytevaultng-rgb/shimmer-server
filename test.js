@@ -1,70 +1,32 @@
-const ffmpeg = require('fluent-ffmpeg');
+// test.js
 const path = require('path');
+const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
 
-const ffmpegPath = path.join(__dirname, 'bin', 'ffmpeg');
-ffmpeg.setFfmpegPath(ffmpegPath);
+// === CONFIG ===
+const videosDir = path.join(__dirname, 'public', 'videos');
+fs.mkdirSync(videosDir, { recursive: true });
+const outPath = path.join(videosDir, `test_output.mp4`);
 
-console.log('Using FFmpeg:', ffmpegPath);
+const backgroundPath = path.join(__dirname, 'templates', 'christmas1.mp4'); // your template
+const sparklePath = path.join(__dirname, 'sparkle.png'); // sparkle overlay
+const fontPath = path.join(__dirname, 'fonts', 'Orbitron-Regular.ttf').replace(/\\/g, '/');
+const text = 'HELLO WORLD'; // optional overlay text
 
-const fontPath = path.join(__dirname, 'fonts', 'Orbitron-Regular.ttf');
-const sparklePath = path.join(__dirname, 'sparkle.png');
-const outputPath = path.join(__dirname, 'public', 'videos', 'sparkle_text.mp4');
+if (fs.existsSync(outPath)) fs.unlinkSync(outPath);
 
-fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+console.log('Using FFmpeg:', path.join(__dirname, 'bin', 'ffmpeg'));
 
-ffmpeg()
-  // background
-  .input('color=c=black:s=640x360:d=5')
-  .inputFormat('lavfi')
-
-  // sparkle texture
+ffmpeg(backgroundPath)
+  .setFfmpegPath(path.join(__dirname, 'bin', 'ffmpeg'))
   .input(sparklePath)
-  .loop(5)
-
   .complexFilter([
-    // draw text alpha mask
-    {
-      filter: 'drawtext',
-      inputs: '0:v',
-      outputs: 'textmask',
-      options: {
-        fontfile: fontPath,
-        text: 'HELLO WORLD',
-        fontsize: 60,
-        fontcolor: 'white',
-        x: '(w-text_w)/2',
-        y: '(h-text_h)/2'
-      }
-    },
-    // scale sparkle
-    {
-      filter: 'scale',
-      inputs: '1:v',
-      outputs: 'sparkleScaled',
-      options: { w: 640, h: 360 }
-    },
-    // mask sparkle with text
-    {
-      filter: 'alphamerge',
-      inputs: ['sparkleScaled', 'textmask'],
-      outputs: 'sparkleText'
-    },
-    // overlay result
-    {
-      filter: 'overlay',
-      inputs: ['0:v', 'sparkleText']
-    }
+    `[0:v][1:v] overlay=0:0:format=auto`,
+    `drawtext=fontfile='${fontPath}':text='${text}':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=(h-text_h)/2`
   ])
-
-  .outputOptions([
-    '-r 25',
-    '-movflags faststart'
-  ])
-  .output(outputPath)
-
-  .on('start', cmd => console.log('FFmpeg started:', cmd))
-  .on('end', () => console.log('Sparkle text video generated'))
-  .on('error', err => console.error('FFmpeg error:', err.message))
-
-  .run();
+  .outputOptions('-movflags faststart', '-pix_fmt yuv420p', '-r 25')
+  .on('start', (cmd) => console.log('FFmpeg start:', cmd))
+  .on('stderr', console.error)
+  .on('error', (err) => console.error('FFmpeg error:', err))
+  .on('end', () => console.log('Video created at', outPath))
+  .save(outPath);
