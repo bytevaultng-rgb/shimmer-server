@@ -1,0 +1,52 @@
+[33mcommit ba36685fe50965e0d7c64cc3beae91b77eaa753d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: Maryam madaki <bytevaultng@gmail.com>
+Date:   Fri Dec 12 23:15:12 2025 +0100
+
+    Remove large binaries from repo and ignore them
+
+A	.gitignore
+D	ffmpeg-8.0.1-essentials_build/LICENSE
+D	ffmpeg-8.0.1-essentials_build/README.txt
+D	ffmpeg-8.0.1-essentials_build/bin/ffmpeg.exe
+D	ffmpeg-8.0.1-essentials_build/bin/ffplay.exe
+D	ffmpeg-8.0.1-essentials_build/bin/ffprobe.exe
+D	ffmpeg-8.0.1-essentials_build/doc/bootstrap.min.css
+D	ffmpeg-8.0.1-essentials_build/doc/community.html
+D	ffmpeg-8.0.1-essentials_build/doc/default.css
+D	ffmpeg-8.0.1-essentials_build/doc/developer.html
+D	ffmpeg-8.0.1-essentials_build/doc/faq.html
+D	ffmpeg-8.0.1-essentials_build/doc/fate.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffmpeg-all.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffmpeg-bitstream-filters.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffmpeg-codecs.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffmpeg-devices.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffmpeg-filters.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffmpeg-formats.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffmpeg-protocols.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffmpeg-resampler.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffmpeg-scaler.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffmpeg-utils.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffmpeg.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffplay-all.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffplay.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffprobe-all.html
+D	ffmpeg-8.0.1-essentials_build/doc/ffprobe.html
+D	ffmpeg-8.0.1-essentials_build/doc/general.html
+D	ffmpeg-8.0.1-essentials_build/doc/git-howto.html
+D	ffmpeg-8.0.1-essentials_build/doc/libavcodec.html
+D	ffmpeg-8.0.1-essentials_build/doc/libavdevice.html
+D	ffmpeg-8.0.1-essentials_build/doc/libavfilter.html
+D	ffmpeg-8.0.1-essentials_build/doc/libavformat.html
+D	ffmpeg-8.0.1-essentials_build/doc/libavutil.html
+D	ffmpeg-8.0.1-essentials_build/doc/libswresample.html
+D	ffmpeg-8.0.1-essentials_build/doc/libswscale.html
+D	ffmpeg-8.0.1-essentials_build/doc/mailing-list-faq.html
+D	ffmpeg-8.0.1-essentials_build/doc/nut.html
+D	ffmpeg-8.0.1-essentials_build/doc/platform.html
+D	ffmpeg-8.0.1-essentials_build/doc/style.min.css
+D	ffmpeg-8.0.1-essentials_build/presets/libvpx-1080p.ffpreset
+D	ffmpeg-8.0.1-essentials_build/presets/libvpx-1080p50_60.ffpreset
+D	ffmpeg-8.0.1-essentials_build/presets/libvpx-360p.ffpreset
+D	ffmpeg-8.0.1-essentials_build/presets/libvpx-720p.ffpreset
+D	ffmpeg-8.0.1-essentials_build/presets/libvpx-720p50_60.ffpreset
+D	templates/christmas3.mp4

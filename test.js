@@ -1,32 +1,54 @@
 // test.js
 const path = require('path');
-const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
+const ffmpeg = require('fluent-ffmpeg');
 
-// === CONFIG ===
+// Explicit FFmpeg path
+const ffmpegPath = path.join(__dirname, 'bin', 'ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
+
+// Output folder
 const videosDir = path.join(__dirname, 'public', 'videos');
 fs.mkdirSync(videosDir, { recursive: true });
-const outPath = path.join(videosDir, `test_output.mp4`);
 
-const backgroundPath = path.join(__dirname, 'templates', 'christmas1.mp4'); // your template
-const sparklePath = path.join(__dirname, 'sparkle.png'); // sparkle overlay
-const fontPath = path.join(__dirname, 'fonts', 'Orbitron-Regular.ttf').replace(/\\/g, '/');
-const text = 'HELLO WORLD'; // optional overlay text
+const jobId = 'testvideo';
+const outPath = path.join(videosDir, `${jobId}.mp4`);
 
-if (fs.existsSync(outPath)) fs.unlinkSync(outPath);
+// Template and sparkle
+const templatePath = path.join(__dirname, 'templates', 'christmas1.mp4'); // replace with your template
+const sparklePath = path.join(__dirname, 'sparkle.png'); // optional
 
-console.log('Using FFmpeg:', path.join(__dirname, 'bin', 'ffmpeg'));
+// Text to overlay
+const text = 'HELLO WORLD';
+const duration = 5;
+const width = 640;
+const height = 360;
 
-ffmpeg(backgroundPath)
-  .setFfmpegPath(path.join(__dirname, 'bin', 'ffmpeg'))
-  .input(sparklePath)
-  .complexFilter([
-    `[0:v][1:v] overlay=0:0:format=auto`,
-    `drawtext=fontfile='${fontPath}':text='${text}':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=(h-text_h)/2`
-  ])
-  .outputOptions('-movflags faststart', '-pix_fmt yuv420p', '-r 25')
-  .on('start', (cmd) => console.log('FFmpeg start:', cmd))
+let command;
+
+// Use template if exists, otherwise black background
+if (fs.existsSync(templatePath)) {
+  command = ffmpeg(templatePath).loop(duration);
+} else {
+  command = ffmpeg().input(`color=black:size=${width}x${height}:duration=${duration}`).inputFormat('lavfi');
+}
+
+// Add sparkle overlay if it exists
+if (fs.existsSync(sparklePath)) {
+  command = command.input(sparklePath).loop(1);
+  const textFilter = `[0:v][1:v] overlay=0:0:format=auto, drawtext=fontfile='${path.join(__dirname, 'fonts', 'Orbitron-Regular.ttf')}':text='${text}':fontcolor=white:fontsize=28:x=(w-text_w)/2:y=(h-text_h)/2`;
+  command = command.complexFilter(textFilter);
+} else {
+  const fontPath = path.join(__dirname, 'fonts', 'Orbitron-Regular.ttf');
+  command = command.videoFilter(`drawtext=fontfile='${fontPath}':text='${text}':fontcolor=white:fontsize=28:x=(w-text_w)/2:y=(h-text_h)/2`);
+}
+
+// Set output options
+command
+  .outputOptions('-pix_fmt yuv420p', '-r 25')
+  .duration(duration)
+  .save(outPath)
+  .on('start', (cmdline) => console.log('FFmpeg start:', cmdline))
   .on('stderr', console.error)
   .on('error', (err) => console.error('FFmpeg error:', err))
-  .on('end', () => console.log('Video created at', outPath))
-  .save(outPath);
+  .on('end', () => console.log('Video generated:', outPath));
