@@ -1,7 +1,17 @@
-ffmpeg-8.0.1-essentials_build/
-templates/*.mp4
-node_modules/
-ffmpeg-8.0.1-essentials_build/
+# Videos
+*.mp4
+
+# FFmpeg binaries
+ffmpeg/
+bin/
+ffmpeg-*/
+
+# Local experiments
+output.*
+sparkleText*.js
+ffmpeg-check.js
+install
+
 templates/*.mp4
 node_modules/
 .env
