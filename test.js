@@ -2,32 +2,32 @@ const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
 const fs = require('fs');
 
-// Paths
-const projectRoot = __dirname;
-const fontPath = path.join(projectRoot, 'fonts', 'Orbitron-Regular.ttf');
-const sparklePath = path.join(projectRoot, 'sparkle.png');
-const videosDir = path.join(projectRoot, 'public', 'videos');
+const ffmpegPath = path.join(__dirname, 'bin', 'ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
 
-// Ensure videos folder exists
-fs.mkdirSync(videosDir, { recursive: true });
+console.log('Using FFmpeg:', ffmpegPath);
 
-const outputPath = path.join(videosDir, 'sparkle_text.mp4');
+const fontPath = path.join(__dirname, 'fonts', 'Orbitron-Regular.ttf');
+const sparklePath = path.join(__dirname, 'sparkle.png');
+const outputPath = path.join(__dirname, 'public', 'videos', 'sparkle_text.mp4');
 
-// Generate animated sparkle text directly
+fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+
 ffmpeg()
-  // Black background via lavfi
-  .input('color=black:size=640x360:duration=5')
+  // background
+  .input('color=c=black:s=640x360:d=5')
   .inputFormat('lavfi')
 
-  // Sparkle image
+  // sparkle texture
   .input(sparklePath)
-  .loop(5) // repeat over 5 seconds
+  .loop(5)
 
-  // Apply complex filters
   .complexFilter([
-    // 1. Create text mask
+    // draw text alpha mask
     {
       filter: 'drawtext',
+      inputs: '0:v',
+      outputs: 'textmask',
       options: {
         fontfile: fontPath,
         text: 'HELLO WORLD',
@@ -35,32 +35,36 @@ ffmpeg()
         fontcolor: 'white',
         x: '(w-text_w)/2',
         y: '(h-text_h)/2'
-      },
-      inputs: '0:v',
-      outputs: 'textmask'
+      }
     },
-    // 2. Scale sparkle
+    // scale sparkle
     {
       filter: 'scale',
-      options: { w: 640, h: 360 },
       inputs: '1:v',
-      outputs: 'sparkleScaled'
+      outputs: 'sparkleScaled',
+      options: { w: 640, h: 360 }
     },
-    // 3. Merge sparkle with text mask
+    // mask sparkle with text
     {
       filter: 'alphamerge',
       inputs: ['sparkleScaled', 'textmask'],
       outputs: 'sparkleText'
     },
-    // 4. Overlay on black background
+    // overlay result
     {
       filter: 'overlay',
-      options: { format: 'auto' },
       inputs: ['0:v', 'sparkleText']
     }
   ])
-  .outputOptions('-pix_fmt yuv420p', '-r 25', '-movflags faststart', '-t 5')
-  .save(outputPath)
-  .on('start', (cmd) => console.log('FFmpeg started:', cmd))
-  .on('error', (err) => console.error('FFmpeg error:', err))
-  .on('end', () => console.log('Sparkle text video generated at', outputPath));
+
+  .outputOptions([
+    '-r 25',
+    '-movflags faststart'
+  ])
+  .output(outputPath)
+
+  .on('start', cmd => console.log('FFmpeg started:', cmd))
+  .on('end', () => console.log('Sparkle text video generated'))
+  .on('error', err => console.error('FFmpeg error:', err.message))
+
+  .run();
