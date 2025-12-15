@@ -4,7 +4,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node ffmpeg-check.js",
-    "start": "node server.js"
+    "test": "node test.js"
   },
   "engines": {
     "node": ">=18"
@@ -13,4 +13,3 @@
     "express": "^4.19.2"
   }
 }
-
