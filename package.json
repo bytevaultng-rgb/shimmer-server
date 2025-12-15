@@ -2,14 +2,15 @@
   "name": "shimmer-server",
   "version": "1.0.0",
   "main": "server.js",
-  "scripts": {
-    "start": "node ffmpeg-check.js",
-    "test": "node test.js"
-  },
   "engines": {
     "node": ">=18"
   },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js"
+  },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.22.1",
+    "fluent-ffmpeg": "^2.1.3"
   }
 }

@@ -1,13 +1,14 @@
-// test.js
-console.log("Server deploy test running...");
+const ffmpeg = require('fluent-ffmpeg');
 
-const { exec } = require("child_process");
+console.log('Server deploy test running...');
 
-exec("ffmpeg -version", (error, stdout, stderr) => {
-  if (error) {
-    console.error(`FFmpeg not found or error: ${error.message}`);
+// Check FFmpeg version
+ffmpeg.getAvailableFormats((err, formats) => {
+  if (err) {
+    console.error('FFmpeg not found or error:', err.message);
     process.exit(1);
-  } else {
-    console.log("FFmpeg version:\n", stdout);
   }
+  console.log('FFmpeg is available. Sample formats:', Object.keys(formats).slice(0, 5)); // show 5 formats
+  console.log('Test completed successfully.');
+  process.exit(0);
 });
