@@ -1,0 +1,51 @@
+{
+  "template": "templates/template.mp4",
+  "effect_files": ["effects/sparkle.mp4", "effects/glow.mp4"],
+  "texts": [
+    {
+      "id": "heading",
+      "text": "HAPPY BIRTHDAY",
+      "font": "PlayfairDisplay-Bold.ttf",
+      "size": 150,
+      "x": "(w-text_w)/2",
+      "y": 180,
+      "effect": "sparkle",
+      "animation": {
+        "type": "scale_fade_in",
+        "start": 0.0,
+        "duration": 1.2
+      }
+    },
+    {
+      "id": "message",
+      "text": "Wishing you joy and happiness today and always",
+      "font": "Poppins-Regular.ttf",
+      "size": 72,
+      "x": "(w-text_w)/2",
+      "y": 420,
+      "effect": "glow",
+      "animation": {
+        "type": "slide_up",
+        "start": 1.0,
+        "duration": 1.2
+      }
+    },
+    {
+      "id": "sender",
+      "text": "— Maryam",
+      "font": "Poppins-Italic.ttf",
+      "size": 56,
+      "x": "(w-text_w)/2",
+      "y": 820,
+      "effect": "sparkle",
+      "animation": {
+        "type": "fade_in",
+        "start": 2.2,
+        "duration": 0.8
+      }
+    }
+  ],
+  "duration": 6,
+  "resolution": "1920x1080",
+  "render_type": "preview"
+}
