@@ -1,61 +1,56 @@
-const { execSync } = require("child_process");
-const fs = require("fs");
+const { exec } = require("child_process");
 const path = require("path");
+const fs = require("fs");
 
-// ===== Option B safety gate =====
+// ---- SAFETY GATE (Option B) ----
 if (!process.env.RUN_RENDER) {
   console.log("RUN_RENDER not set. Worker idle.");
   process.exit(0);
 }
 
-// ===== Paths =====
-const ROOT = path.resolve(__dirname);
-const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
-const SPARKLE = path.join(ROOT, "effects", "sparkle.mp4");
-const FONT = path.join(ROOT, "fonts", "Pacifico-Regular.ttf");
-const OUTDIR = path.join(ROOT, "renders");
+// ---- Paths ----
+const base = "/opt/render/project/src/render-test";
+
+const TEMPLATE = path.join(base, "templates/HBD.png");
+const SPARKLE = path.join(base, "effects/sparkle.mp4");
+const FONT = path.join(base, "fonts/Tourney-Bold.ttf");
+const OUTDIR = path.join(base, "renders");
 const OUTPUT = path.join(OUTDIR, "sparkle_text_test.mp4");
 
-// ===== Ensure output dir =====
-if (!fs.existsSync(OUTDIR)) {
-  fs.mkdirSync(OUTDIR, { recursive: true });
-}
+if (!fs.existsSync(OUTDIR)) fs.mkdirSync(OUTDIR);
 
-// ===== Hard-coded test text =====
-const TEXT = "Happy Birthday Maryam";
+// ---- Hardcoded test text ----
+const TEXT = "HAPPY BIRTHDAY";
 
-// ===== FFmpeg command =====
+// ---- FFmpeg pipeline ----
 const cmd = `
 ffmpeg -y \
 -loop 1 -i "${TEMPLATE}" \
--stream_loop -1 -i "${SPARKLE}" \
+-i "${SPARKLE}" \
 -filter_complex "
-[0:v]scale=1280:720,format=rgba[bg];
-
-[bg]drawtext=
-fontfile='${FONT}':
+[1:v]format=rgba[fx];
+color=black:s=1280x720,format=gray,
+drawtext=fontfile='${FONT}':
 text='${TEXT}':
-fontsize=96:
-fontcolor=white:
+fontsize=120:
 x=(w-text_w)/2:
-y=(h-text_h)/2,
-format=gray[text_mask];
-
-[1:v]scale=1280:720,format=rgba[sparkle];
-
-[sparkle][text_mask]alphamerge[sparkle_text];
-
-[bg][sparkle_text]overlay=0:0[out]
+y=(h-text_h)/2[mask];
+[fx][mask]alphamerge[txt];
+[0:v][txt]overlay=0:0
 " \
--map "[out]" \
 -t 4 \
--c:v libx264 \
--pix_fmt yuv420p \
 -preset ultrafast \
 -crf 28 \
+-pix_fmt yuv420p \
 "${OUTPUT}"
-`;
+`.replace(/\n/g, " ");
 
-console.log("Running sparkle text render...");
-execSync(cmd, { stdio: "inherit" });
-console.log("Sparkle text render complete:", OUTPUT);
+console.log("Running FFmpeg:\n", cmd);
+
+exec(cmd, (err, stdout, stderr) => {
+  if (err) {
+    console.error("FFmpeg failed:", stderr);
+    process.exit(1);
+  }
+  console.log("Sparkle text render complete:", OUTPUT);
+});
