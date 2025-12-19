@@ -1,56 +1,99 @@
-const { exec } = require("child_process");
-const path = require("path");
-const fs = require("fs");
+/**
+ * FFmpeg Worker – Safe Option B
+ * - Runs ONLY when RUN_RENDER=1
+ * - Creates output directories
+ * - Verifies output file existence
+ */
 
-// ---- SAFETY GATE (Option B) ----
+const { exec } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+
+// ---------- SAFETY GATE ----------
 if (!process.env.RUN_RENDER) {
   console.log("RUN_RENDER not set. Worker idle.");
   process.exit(0);
 }
 
-// ---- Paths ----
-const base = "/opt/render/project/src/render-test";
+// ---------- PATHS ----------
+const ROOT = __dirname;
 
-const TEMPLATE = path.join(base, "templates/HBD.png");
-const SPARKLE = path.join(base, "effects/sparkle.mp4");
-const FONT = path.join(base, "fonts/Tourney-Bold.ttf");
-const OUTDIR = path.join(base, "renders");
-const OUTPUT = path.join(OUTDIR, "sparkle_text_test.mp4");
+const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
+const FONT = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
+const SPARKLE = path.join(ROOT, "effects", "sparkle.mp4");
 
-if (!fs.existsSync(OUTDIR)) fs.mkdirSync(OUTDIR);
+const OUTPUT_DIR = path.join(ROOT, "renders");
+const OUTPUT_FILE = path.join(OUTPUT_DIR, "sparkle_text_test.mp4");
 
-// ---- Hardcoded test text ----
-const TEXT = "HAPPY BIRTHDAY";
+// ---------- ENSURE OUTPUT DIR ----------
+if (!fs.existsSync(OUTPUT_DIR)) {
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+  console.log("Created renders directory:", OUTPUT_DIR);
+}
 
-// ---- FFmpeg pipeline ----
-const cmd = `
+// ---------- VALIDATE INPUT FILES ----------
+const requiredFiles = [
+  { name: "Template", path: TEMPLATE },
+  { name: "Font", path: FONT },
+  { name: "Sparkle effect", path: SPARKLE }
+];
+
+for (const f of requiredFiles) {
+  if (!fs.existsSync(f.path)) {
+    console.error(`Missing ${f.name}:`, f.path);
+    process.exit(1);
+  }
+}
+
+// ---------- FFMPEG COMMAND ----------
+const ffmpegCmd = `
 ffmpeg -y \
 -loop 1 -i "${TEMPLATE}" \
 -i "${SPARKLE}" \
 -filter_complex "
-[1:v]format=rgba[fx];
-color=black:s=1280x720,format=gray,
-drawtext=fontfile='${FONT}':
-text='${TEXT}':
-fontsize=120:
-x=(w-text_w)/2:
-y=(h-text_h)/2[mask];
-[fx][mask]alphamerge[txt];
-[0:v][txt]overlay=0:0
+  [1:v]format=rgba[fx];
+  color=black:s=1280x720,format=gray,
+  drawtext=fontfile='${FONT}':
+    text='HAPPY BIRTHDAY':
+    fontsize=120:
+    x=(w-text_w)/2:
+    y=(h-text_h)/2[mask];
+  [fx][mask]alphamerge[txt];
+  [0:v][txt]overlay=0:0
 " \
 -t 4 \
 -preset ultrafast \
 -crf 28 \
 -pix_fmt yuv420p \
-"${OUTPUT}"
-`.replace(/\n/g, " ");
+"${OUTPUT_FILE}"
+`;
 
-console.log("Running FFmpeg:\n", cmd);
+// ---------- RUN ----------
+console.log("Running FFmpeg:\n", ffmpegCmd);
 
-exec(cmd, (err, stdout, stderr) => {
-  if (err) {
-    console.error("FFmpeg failed:", stderr);
+exec(ffmpegCmd, (error, stdout, stderr) => {
+  if (error) {
+    console.error("FFmpeg execution failed");
+    console.error(stderr);
     process.exit(1);
   }
-  console.log("Sparkle text render complete:", OUTPUT);
+
+  // ---------- VERIFY OUTPUT ----------
+  if (fs.existsSync(OUTPUT_FILE)) {
+    const size = fs.statSync(OUTPUT_FILE).size;
+    if (size > 0) {
+      console.log("Sparkle/glitter render SUCCESS");
+      console.log("Output:", OUTPUT_FILE);
+      console.log("File size:", size, "bytes");
+    } else {
+      console.error("Output file created but size is 0 bytes");
+      process.exit(1);
+    }
+  } else {
+    console.error("FFmpeg finished but output file was NOT created");
+    process.exit(1);
+  }
+
+  // ---------- CLEAN EXIT ----------
+  process.exit(0);
 });
