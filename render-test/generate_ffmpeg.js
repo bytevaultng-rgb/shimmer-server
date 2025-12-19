@@ -1,5 +1,5 @@
 /**
- * FFmpeg Worker – Safe Option B
+ * FFmpeg Worker – Safe Option B (FINAL)
  * Sparkle / Glitter alpha-masked text test
  */
 
@@ -7,15 +7,12 @@ const { exec } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
-// ---------- SAFETY GATE ----------
+// ---------- HARD IDLE BLOCK ----------
 if (!process.env.RUN_RENDER) {
   console.log("RUN_RENDER not set. Worker idle.");
-
-  // Keep worker alive without doing anything
-  setInterval(() => {}, 60_000);
+  setInterval(() => {}, 60_000); // stay alive forever
   return;
 }
-
 
 // ---------- PATHS ----------
 const ROOT = __dirname;
@@ -37,7 +34,8 @@ if (!fs.existsSync(OUTPUT_DIR)) {
 for (const f of [TEMPLATE, FONT, SPARKLE]) {
   if (!fs.existsSync(f)) {
     console.error("Missing file:", f);
-    process.exit(1);
+    setInterval(() => {}, 60_000); // idle instead of exit
+    return;
   }
 }
 
@@ -65,7 +63,6 @@ ffmpeg -y
 "${OUTPUT_FILE}"
 `.replace(/\n/g, " ");
 
-
 // ---------- RUN ----------
 console.log("Running FFmpeg:\n", ffmpegCmd);
 
@@ -73,23 +70,21 @@ exec(ffmpegCmd, (error, stdout, stderr) => {
   if (error) {
     console.error("FFmpeg execution failed");
     console.error(stderr);
-    process.exit(1);
+    setInterval(() => {}, 60_000);
+    return;
   }
 
-  if (!fs.existsSync(OUTPUT_FILE)) {
-    console.error("Output file not created");
-    process.exit(1);
-  }
-
-  const size = fs.statSync(OUTPUT_FILE).size;
-  if (size === 0) {
-    console.error("Output file is empty");
-    process.exit(1);
+  if (!fs.existsSync(OUTPUT_FILE) || fs.statSync(OUTPUT_FILE).size === 0) {
+    console.error("Output file invalid");
+    setInterval(() => {}, 60_000);
+    return;
   }
 
   console.log("✅ Sparkle/glitter render SUCCESS");
   console.log("Output:", OUTPUT_FILE);
-  console.log("File size:", size, "bytes");
+  console.log("File size:", fs.statSync(OUTPUT_FILE).size, "bytes");
 
-  process.exit(0);
+  // 🔒 IMPORTANT: GO IDLE, DO NOT EXIT
+  console.log("Worker finished job. Going idle.");
+  setInterval(() => {}, 60_000);
 });
