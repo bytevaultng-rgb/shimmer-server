@@ -10,8 +10,12 @@ const path = require("path");
 // ---------- SAFETY GATE ----------
 if (!process.env.RUN_RENDER) {
   console.log("RUN_RENDER not set. Worker idle.");
-  process.exit(0);
+
+  // Keep worker alive without doing anything
+  setInterval(() => {}, 60_000);
+  return;
 }
+
 
 // ---------- PATHS ----------
 const ROOT = __dirname;
