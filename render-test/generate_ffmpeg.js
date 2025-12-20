@@ -19,7 +19,7 @@ const ROOT = __dirname;
 
 const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
 const FONT = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
-const PARTICLES = path.join(ROOT, "effects", "golden_particles_alpha.mov.mp4");
+const PARTICLES = path.join(ROOT, "effects", "golden_particles_alpha.mov");
 
 const OUTPUT_DIR = path.join(ROOT, "renders");
 const OUTPUT_FILE = path.join(
