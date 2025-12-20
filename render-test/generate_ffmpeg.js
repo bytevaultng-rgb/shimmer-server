@@ -43,10 +43,15 @@ for (const f of [TEMPLATE, FONT, SPARKLE]) {
   const ffmpegCmd = `
 ffmpeg -y
 -loop 1 -i "${TEMPLATE}"
--i "${SPARKLE}"
+-loop 1 -i "${path.join(ROOT, "effects", "sparkle.png")}"
+-i "${path.join(ROOT, "effects", "glow.mp4")}"
 -filter_complex "
   [0:v]scale=1280:720,format=rgba[bg];
-  [1:v]scale=1280:720,format=rgba[fx];
+
+  [1:v]scale=1280:720,format=rgba[sparkle];
+
+  [2:v]scale=1280:720,format=rgba,
+       gblur=sigma=12[glow];
 
   color=black:s=1280x720,
   drawtext=fontfile=${FONT}:
@@ -57,8 +62,11 @@ ffmpeg -y
     y=(h-text_h)/2,
   format=gray[mask];
 
-  [fx][mask]alphamerge[textfx];
-  [bg][textfx]overlay=0:0
+  [sparkle][mask]alphamerge[text_glitter];
+  [glow][mask]alphamerge[text_glow];
+
+  [bg][text_glitter]overlay=0:0[tmp];
+  [tmp][text_glow]overlay=0:0
 "
 -t 4
 -shortest
@@ -67,6 +75,7 @@ ffmpeg -y
 -pix_fmt yuv420p
 "${OUTPUT_FILE}"
 `.replace(/\n/g, " ");
+
 
 console.log("Running FFmpeg…");
 
