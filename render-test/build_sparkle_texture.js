@@ -1,6 +1,7 @@
 /**
  * One-time Sparkle Texture Builder
  * CommonJS-safe (Node 18–25)
+ * Builds HIGH-CONTRAST sparkle loop
  * Uploads to R2 and prints download link
  */
 
@@ -20,14 +21,16 @@ async function main() {
 
   console.log("▶ Building sparkle texture…");
 
-  // ---- BUILD (sync so logs flush) ----
+  // ---- BUILD (SYNC) ----
   execSync(`
 ffmpeg -y \
--f lavfi -i color=white:s=1920x1920:d=3 \
+-f lavfi -i color=black:s=1920x1920:d=3 \
 -filter_complex "
-noise=alls=20:allf=t,
-eq=contrast=2.2:brightness=-0.05,
-colorchannelmixer=rr=1.05:gg=0.95:bb=0.7,
+noise=alls=45:allf=t,
+eq=contrast=4.0:brightness=0.05,
+curves=master='0/0 0.2/0.05 0.5/0.6 1/1',
+colorchannelmixer=rr=1.2:gg=0.95:bb=0.6,
+gblur=sigma=0.8,
 format=yuv420p
 " \
 -r 30 \
@@ -72,7 +75,7 @@ format=yuv420p
   console.log(publicUrl);
   console.log("=====================================");
 
-  // Force stop so Render does not restart endlessly
+  // Force stop so Render restarts don’t matter
   process.exit(1);
 }
 
