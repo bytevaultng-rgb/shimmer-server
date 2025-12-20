@@ -20,8 +20,6 @@ const ROOT = __dirname;
 
 const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
 const FONT = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
-const SPARKLE_PNG = path.join(ROOT, "effects", "sparkle.png");
-const GLOW_MP4 = path.join(ROOT, "effects", "glow.mp4");
 
 const OUTPUT_DIR = path.join(ROOT, "renders");
 const OUTPUT_FILE = path.join(OUTPUT_DIR, "sparkle_text_test.mp4");
@@ -32,56 +30,52 @@ if (!fs.existsSync(OUTPUT_DIR)) {
 }
 
 // ---------- VALIDATE INPUT ----------
-for (const f of [TEMPLATE, FONT, SPARKLE_PNG, GLOW_MP4]) {
+for (const f of [TEMPLATE, FONT]) {
   if (!fs.existsSync(f)) {
     console.error("Missing file:", f);
     process.exit(1);
   }
 }
 
-// ---------- FFMPEG ----------
+// ---------- FFMPEG (WORKING) ----------
 const ffmpegCmd = `
 ffmpeg -y \
 -loop 1 -i "${TEMPLATE}" \
 -filter_complex "
 [0:v]scale=1280:720,format=rgba[bg];
 
-color=black@0.0:s=1280x720,format=rgba,
-drawtext=fontfile=${FONT}:
+color=black@0.0:s=1280x720:d=4,format=rgba,
+drawtext=fontfile='${FONT}':
 text='HAPPY BIRTHDAY':
 fontsize=120:
 fontcolor=white:
-x=w/2-text_w/2:
-y=h/2-text_h/2[text];
+x=(w-text_w)/2:
+y=(h-text_h)/2[text];
 
 [text]split=3[text_main][text_mask][text_glow];
 
-/* sparkle source */
 nullsrc=s=1280x720,format=rgba,
 noise=alls=40:allf=u,
-eq=contrast=2.5:brightness=0.15,
+eq=contrast=2.3:brightness=0.1,
 colorchannelmixer=rr=1:gg=0.9:bb=0.6:aa=1[sparkle];
 
-/* sparkle mask */
 [text_mask]alphaextract[mask];
 [sparkle][mask]alphamerge[text_sparkle];
 
-/* glow */
-[text_glow]gblur=sigma=20,
+[text_glow]gblur=sigma=18,
 colorchannelmixer=rr=1:gg=0.85:bb=0.3:aa=1[glow];
 
-/* compose */
-[bg][glow]overlay=0:0[tmp1];
-[tmp1][text_sparkle]overlay=0:0[tmp2];
-[tmp2][text_main]overlay=0:0
+[bg][glow]overlay[tmp1];
+[tmp1][text_sparkle]overlay[tmp2];
+[tmp2][text_main]overlay
 " \
 -t 4 \
 -pix_fmt yuv420p \
+-movflags +faststart \
 -preset ultrafast \
 -crf 26 \
 "${OUTPUT_FILE}"
 `.replace(/\n/g, " ");
-
 
 console.log("Running FFmpeg…");
 
@@ -128,6 +122,5 @@ exec(ffmpegCmd, async (err, stdout, stderr) => {
   console.log("🎉 UPLOAD SUCCESS");
   console.log("PUBLIC LINK:", publicUrl);
 
-  console.log("Worker finished job. Going idle.");
   process.exit(0);
 });
