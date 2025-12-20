@@ -1,6 +1,7 @@
 /**
  * One-time Sparkle Texture Builder
- * Forces single run + prints download link
+ * CommonJS-safe (Node 18–25)
+ * Uploads to R2 and prints download link
  */
 
 const { execSync } = require("child_process");
@@ -9,17 +10,18 @@ const path = require("path");
 const crypto = require("crypto");
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
-const OUT_DIR = path.join(__dirname, "effects");
-const OUT_FILE = path.join(OUT_DIR, "sparkle_loop.mp4");
+async function main() {
+  const OUT_DIR = path.join(__dirname, "effects");
+  const OUT_FILE = path.join(OUT_DIR, "sparkle_loop.mp4");
 
-if (!fs.existsSync(OUT_DIR)) {
-  fs.mkdirSync(OUT_DIR, { recursive: true });
-}
+  if (!fs.existsSync(OUT_DIR)) {
+    fs.mkdirSync(OUT_DIR, { recursive: true });
+  }
 
-console.log("▶ Building sparkle texture…");
+  console.log("▶ Building sparkle texture…");
 
-// 1️⃣ BUILD (SYNC – IMPORTANT)
-execSync(`
+  // ---- BUILD (sync so logs flush) ----
+  execSync(`
 ffmpeg -y \
 -f lavfi -i color=white:s=1920x1920:d=3 \
 -filter_complex "
@@ -31,34 +33,52 @@ format=yuv420p
 -r 30 \
 -movflags +faststart \
 "${OUT_FILE}"
-`, { stdio: "inherit" });
+  `, { stdio: "inherit" });
 
-// 2️⃣ UPLOAD
-const s3 = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  },
+  if (!fs.existsSync(OUT_FILE)) {
+    throw new Error("Sparkle texture not created");
+  }
+
+  console.log("✅ Sparkle texture created locally");
+
+  // ---- R2 UPLOAD ----
+  const s3 = new S3Client({
+    region: "auto",
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    },
+  });
+
+  const buffer = fs.readFileSync(OUT_FILE);
+  const key = `effects/sparkle_loop_${Date.now()}_${crypto
+    .randomBytes(4)
+    .toString("hex")}.mp4`;
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: "video/mp4",
+    })
+  );
+
+  const publicUrl = `${process.env.R2_PUBLIC_BASE}/${key}`;
+
+  console.log("=====================================");
+  console.log("🎉 DOWNLOAD LINK (COPY THIS):");
+  console.log(publicUrl);
+  console.log("=====================================");
+
+  // Force stop so Render does not restart endlessly
+  process.exit(1);
+}
+
+// ---- RUN ----
+main().catch((err) => {
+  console.error("❌ Sparkle build failed");
+  console.error(err);
+  process.exit(1);
 });
-
-const buffer = fs.readFileSync(OUT_FILE);
-const key = `effects/sparkle_loop_${Date.now()}_${crypto.randomBytes(4).toString("hex")}.mp4`;
-
-await s3.send(new PutObjectCommand({
-  Bucket: process.env.R2_BUCKET,
-  Key: key,
-  Body: buffer,
-  ContentType: "video/mp4",
-}));
-
-const publicUrl = `${process.env.R2_PUBLIC_BASE}/${key}`;
-
-console.log("=====================================");
-console.log("🎉 DOWNLOAD LINK (COPY THIS):");
-console.log(publicUrl);
-console.log("=====================================");
-
-// 3️⃣ FORCE STOP (prevents restart loop)
-process.exit(1);
