@@ -40,7 +40,7 @@ for (const f of [TEMPLATE, FONT, SPARKLE]) {
 }
 
 // ---------- FFMPEG ----------
-const ffmpegCmd = `
+ const ffmpegCmd = `
 ffmpeg -y
 -loop 1 -i "${TEMPLATE}"
 -i "${SPARKLE}"
@@ -49,27 +49,27 @@ ffmpeg -y
 
   [1:v]scale=1280:720,format=rgba[fx];
 
-  color=black:s=1280x720,
+  color=black:s=1280x720,format=rgba,
   drawtext=fontfile='${FONT}':
     text='HAPPY BIRTHDAY':
     fontsize=120:
     fontcolor=white:
     x=(w-text_w)/2:
     y=(h-text_h)/2,
-  format=rgba,
   geq=r='255':g='255':b='255':a='lum(X,Y)'[mask];
 
   [fx][mask]alphamerge[textfx];
 
   [bg][textfx]overlay=0:0
 "
-
 -t 4
+-shortest
 -preset ultrafast
 -crf 28
 -pix_fmt yuv420p
 "${OUTPUT_FILE}"
-`.replace(/\n/g, " ");
+`.replace(/\\n/g, " ");
+
 
 console.log("Running FFmpeg…");
 
