@@ -45,20 +45,40 @@ ffmpeg -y
 -loop 1 -i "${TEMPLATE}"
 -i "${SPARKLE}"
 -filter_complex "
-  [0:v]scale=1280:720,format=rgba[bg];
-  [1:v]scale=1280:720,format=rgba[fx];
+[0:v]scale=1280:720,format=rgba[bg];
 
-  color=black:s=1280x720,
-  drawtext=fontfile=${FONT}:
-    text=HAPPY\\ BIRTHDAY:
-    fontsize=120:
-    fontcolor=white:
-    x=(w-text_w)/2:
-    y=(h-text_h)/2,
-  format=gray[mask];
+[1:v]scale=1280:720,format=rgba,
+eq=contrast=2.8:brightness=0.08:saturation=1.4,
+gblur=sigma=0.4[fx];
 
-  [fx][mask]alphamerge[textfx];
-  [bg][textfx]overlay=0:0
+color=black:s=1280x720,
+drawtext=fontfile=${FONT}:
+ text=HAPPY\\ BIRTHDAY:
+ fontsize=130:
+ fontcolor=white:
+ x=(w-text_w)/2:
+ y=(h-text_h)/2,
+format=gray,
+eq=contrast=3.8:brightness=0.02[mask];
+
+[fx][mask]alphamerge[sparkle];
+
+[sparkle]
+colorchannelmixer=rr=1.25:gg=1.05:bb=0.75,
+eq=contrast=1.4:brightness=0.06[sparkle_gold];
+
+[sparkle_gold]gblur=sigma=12[glow];
+
+[bg][glow]overlay=0:0[tmp1];
+[tmp1][sparkle_gold]overlay=0:0[tmp2];
+
+[tmp2]
+drawtext=fontfile=${FONT}:
+ text=HAPPY\\ BIRTHDAY:
+ fontsize=130:
+ fontcolor=white:
+ x=(w-text_w)/2:
+ y=(h-text_h)/2
 "
 -t 4
 -shortest
@@ -67,6 +87,7 @@ ffmpeg -y
 -pix_fmt yuv420p
 "${OUTPUT_FILE}"
 `.replace(/\n/g, " ");
+
 
 
 console.log("Running FFmpeg…");
