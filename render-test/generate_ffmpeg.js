@@ -1,41 +1,40 @@
 /**
- * FFmpeg Background Worker
- * One-shot render, then idle
+ * FFmpeg Background Worker – RUN ONCE, NO REPEAT
  */
 
 const { exec } = require("child_process");
 const fs = require("fs");
 const path = require("path");
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-
-// ---------- SAFETY GATE ----------
-if (!process.env.RUN_RENDER) {
-  console.log("RUN_RENDER not set. Worker idle.");
-  setInterval(() => {}, 60_000); // keep alive
-  return;
-}
-
-// ---------- PREVENT RE-RUN ----------
-if (global.__JOB_RAN__) {
-  console.log("Job already ran. Worker idle.");
-  setInterval(() => {}, 60_000);
-  return;
-}
-global.__JOB_RAN__ = true;
 
 // ---------- PATHS ----------
 const ROOT = __dirname;
+
 const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
 const FONT = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
 const SPARKLE = path.join(ROOT, "effects", "sparkle.mp4");
 
 const OUTPUT_DIR = path.join(ROOT, "renders");
 const OUTPUT_FILE = path.join(OUTPUT_DIR, "sparkle_text_test.mp4");
-const OUTPUT_KEY = "sparkle_text_test.mp4";
 
-// ---------- ENSURE OUTPUT DIR ----------
-if (!fs.existsSync(OUTPUT_DIR)) {
-  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+// 🔒 LOCK FILE (THIS STOPS REPEATS)
+const LOCK_FILE = path.join(ROOT, ".render.lock");
+
+// ---------- STOP IF ALREADY RAN ----------
+if (fs.existsSync(LOCK_FILE)) {
+  console.log("Render already completed. Worker idle.");
+  setInterval(() => {}, 60_000); // stay alive
+  return;
+}
+
+// ---------- ENSURE DIR ----------
+fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+
+// ---------- VALIDATE FILES ----------
+for (const f of [TEMPLATE, FONT, SPARKLE]) {
+  if (!fs.existsSync(f)) {
+    console.error("Missing file:", f);
+    process.exit(1);
+  }
 }
 
 // ---------- FFMPEG ----------
@@ -55,43 +54,35 @@ ffmpeg -y
   [0:v]scale=1280:720[bg];
   [bg][txt]overlay=0:0
 "
--t 4 -preset ultrafast -crf 28 -pix_fmt yuv420p
+-t 4
+-preset ultrafast
+-crf 28
+-pix_fmt yuv420p
 "${OUTPUT_FILE}"
 `.replace(/\n/g, " ");
 
 console.log("Running FFmpeg…");
 
-exec(ffmpegCmd, async (err) => {
+exec(ffmpegCmd, (err, stdout, stderr) => {
   if (err) {
     console.error("FFmpeg failed");
-    setInterval(() => {}, 60_000);
-    return;
+    console.error(stderr);
+    process.exit(1);
   }
 
-  const fileBuffer = fs.readFileSync(OUTPUT_FILE);
+  if (!fs.existsSync(OUTPUT_FILE) || fs.statSync(OUTPUT_FILE).size === 0) {
+    console.error("Output not created");
+    process.exit(1);
+  }
 
-  const s3 = new S3Client({
-    region: "auto",
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY
-    }
-  });
+  // 🔒 CREATE LOCK
+  fs.writeFileSync(LOCK_FILE, new Date().toISOString());
 
-  await s3.send(new PutObjectCommand({
-    Bucket: process.env.R2_BUCKET,
-    Key: OUTPUT_KEY,
-    Body: fileBuffer,
-    ContentType: "video/mp4",
-    ACL: "public-read"
-  }));
+  console.log("✅ Render SUCCESS");
+  console.log("Output:", OUTPUT_FILE);
 
-  console.log("✅ Render uploaded");
-  console.log(`${process.env.R2_PUBLIC_BASE}/${OUTPUT_KEY}`);
-
-  console.log("Worker finished job. Going idle.");
-  setInterval(() => {}, 60_000); // keep alive
+  // ✅ STAY IDLE (Render will NOT rerun FFmpeg)
+  console.log("Worker idle.");
+  setInterval(() => {}, 60_000);
 });
-
 
