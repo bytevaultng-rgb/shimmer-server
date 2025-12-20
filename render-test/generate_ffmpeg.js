@@ -45,17 +45,25 @@ ffmpeg -y
 -loop 1 -i "${TEMPLATE}"
 -i "${SPARKLE}"
 -filter_complex "
+  [0:v]scale=1280:720,format=rgba[bg];
+
   [1:v]scale=1280:720,format=rgba[fx];
-  color=black:s=1280x720,format=gray,
-    drawtext=fontfile='${FONT}':
-      text='HAPPY BIRTHDAY':
-      fontsize=120:
-      x=(w-text_w)/2:
-      y=(h-text_h)/2[mask];
-  [fx][mask]alphamerge[txt];
-  [0:v]scale=1280:720[bg];
-  [bg][txt]overlay=0:0
+
+  color=black:s=1280x720,
+  drawtext=fontfile='${FONT}':
+    text='HAPPY BIRTHDAY':
+    fontsize=120:
+    fontcolor=white:
+    x=(w-text_w)/2:
+    y=(h-text_h)/2,
+  format=rgba,
+  geq=r='255':g='255':b='255':a='lum(X,Y)'[mask];
+
+  [fx][mask]alphamerge[textfx];
+
+  [bg][textfx]overlay=0:0
 "
+
 -t 4
 -preset ultrafast
 -crf 28
