@@ -40,49 +40,42 @@ for (const f of [TEMPLATE, FONT, SPARKLE_PNG, GLOW_MP4]) {
 }
 
 // ---------- FFMPEG ----------
-const ffmpegCmd = `
-ffmpeg -y
--loop 1 -i "${TEMPLATE}"
--loop 1 -i "${SPARKLE_PNG}"
--i "${GLOW_MP4}"
- -filter_complex "
- -filter_complex "
-  [0:v]scale=1280:720,format=rgba[bg];
+  const ffmpegCmd = `
+ffmpeg -y \
+-loop 1 -i "${TEMPLATE}" \
+-filter_complex "
+[0:v]scale=1280:720,format=rgba[bg];
 
-  color=color=black@0.0:s=1280x720,format=rgba,
-  drawtext=fontfile=${FONT}:
-    text=HAPPY\\ BIRTHDAY:
-    fontsize=120:
-    fontcolor=white:
-    x=(w-text_w)/2:
-    y=(h-text_h)/2,
-  split=3[text_main][text_mask][text_glow];
+color=black@0.0:s=1280x720,format=rgba,
+drawtext=fontfile=${FONT}:
+text='HAPPY BIRTHDAY':
+fontsize=120:
+fontcolor=white:
+x=w/2-text_w/2:
+y=h/2-text_h/2[text];
 
-  /* ---------- SPARKLE (MASKED INTO TEXT) ---------- */
-  noise=alls=30:allf=u,
-  format=rgba[sparkle];
+[text]split=3[text_main][text_mask][text_glow];
 
-  [text_mask]alphaextract[mask];
-  [sparkle][mask]alphamerge[sparkle_text];
+noise=alls=25:allf=u,
+format=rgba[sparkle];
 
-  /* ---------- GLOW (SOFT, BEHIND TEXT) ---------- */
-  [text_glow]gblur=sigma=16,
-             colorchannelmixer=rr=1:gg=0.85:bb=0.3:aa=0.8[glow];
+[text_mask]alphaextract[mask];
+[sparkle][mask]alphamerge[text_sparkle];
 
-  /* ---------- COMPOSE ---------- */
-  [bg][glow]overlay=0:0[tmp1];
-  [tmp1][sparkle_text]overlay=0:0[tmp2];
-  [tmp2][text_main]overlay=0:0
-"
+[text_glow]gblur=sigma=14,
+colorchannelmixer=rr=1:gg=0.85:bb=0.3:aa=0.85[glow];
 
-
--t 4
--shortest
--preset ultrafast
--crf 28
--pix_fmt yuv420p
+[bg][glow]overlay=0:0[tmp1];
+[tmp1][text_sparkle]overlay=0:0[tmp2];
+[tmp2][text_main]overlay=0:0
+" \
+-t 4 \
+-pix_fmt yuv420p \
+-preset ultrafast \
+-crf 28 \
 "${OUTPUT_FILE}"
-`.replace(/\n/g, " ");
+`.replace(/\\n/g, " ");
+
 
 console.log("Running FFmpeg…");
 
