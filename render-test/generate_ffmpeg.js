@@ -6,7 +6,6 @@ const { exec } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
 // ---------- SAFETY ----------
@@ -21,7 +20,8 @@ const ROOT = __dirname;
 
 const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
 const FONT = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
-const SPARKLE = path.join(ROOT, "effects", "sparkle.mp4");
+const SPARKLE_PNG = path.join(ROOT, "effects", "sparkle.png");
+const GLOW_MP4 = path.join(ROOT, "effects", "glow.mp4");
 
 const OUTPUT_DIR = path.join(ROOT, "renders");
 const OUTPUT_FILE = path.join(OUTPUT_DIR, "sparkle_text_test.mp4");
@@ -32,7 +32,7 @@ if (!fs.existsSync(OUTPUT_DIR)) {
 }
 
 // ---------- VALIDATE INPUT ----------
-for (const f of [TEMPLATE, FONT, SPARKLE]) {
+for (const f of [TEMPLATE, FONT, SPARKLE_PNG, GLOW_MP4]) {
   if (!fs.existsSync(f)) {
     console.error("Missing file:", f);
     process.exit(1);
@@ -40,27 +40,23 @@ for (const f of [TEMPLATE, FONT, SPARKLE]) {
 }
 
 // ---------- FFMPEG ----------
- const ffmpegCmd = `
+const ffmpegCmd = `
 ffmpeg -y
 -loop 1 -i "${TEMPLATE}"
--loop 1 -i "${path.join(ROOT, "effects", "sparkle.png")}"
--i "${path.join(ROOT, "effects", "glow.mp4")}"
+-loop 1 -i "${SPARKLE_PNG}"
+-i "${GLOW_MP4}"
 -filter_complex "
   [0:v]scale=1280:720,format=rgba[bg];
-
   [1:v]scale=1280:720,format=rgba[sparkle];
+  [2:v]scale=1280:720,format=rgba,gblur=sigma=12[glow];
 
-  [2:v]scale=1280:720,format=rgba,
-       gblur=sigma=12[glow];
-
-  color=black:s=1280x720,
-  drawtext=fontfile=${FONT}:
-    text=HAPPY\\ BIRTHDAY:
-    fontsize=120:
-    fontcolor=white:
-    x=(w-text_w)/2:
-    y=(h-text_h)/2,
-  format=gray[mask];
+  color=black:s=1280x720,format=gray[base];
+  [base]drawtext=fontfile=${FONT}:
+        text=HAPPY\\ BIRTHDAY:
+        fontsize=120:
+        fontcolor=white:
+        x=(w-text_w)/2:
+        y=(h-text_h)/2[mask];
 
   [sparkle][mask]alphamerge[text_glitter];
   [glow][mask]alphamerge[text_glow];
@@ -76,13 +72,12 @@ ffmpeg -y
 "${OUTPUT_FILE}"
 `.replace(/\n/g, " ");
 
-
 console.log("Running FFmpeg…");
 
 exec(ffmpegCmd, async (err, stdout, stderr) => {
   if (err) {
     console.error("❌ FFmpeg failed");
-    console.error(stderr); // VERY IMPORTANT
+    console.error(stderr);
     process.exit(1);
   }
 
@@ -104,7 +99,9 @@ exec(ffmpegCmd, async (err, stdout, stderr) => {
   });
 
   const fileBuffer = fs.readFileSync(OUTPUT_FILE);
-  const key = `renders/sparkle_${Date.now()}_${crypto.randomBytes(4).toString("hex")}.mp4`;
+  const key = `renders/sparkle_${Date.now()}_${crypto
+    .randomBytes(4)
+    .toString("hex")}.mp4`;
 
   await s3.send(
     new PutObjectCommand({
