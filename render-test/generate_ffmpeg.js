@@ -40,7 +40,7 @@ for (const f of [TEMPLATE, FONT, SPARKLE]) {
 }
 
 // ---------- FFMPEG ----------
-  const ffmpegCmd = `
+ const ffmpegCmd = `
 ffmpeg -y
 -loop 1 -i "${TEMPLATE}"
 -loop 1 -i "${path.join(ROOT, "effects", "sparkle.png")}"
