@@ -20,19 +20,18 @@ if (!fs.existsSync(path.dirname(OUT))) {
 // ---------- BUILD SPARKLE ----------
 const ffmpegCmd = `
 ffmpeg -y \
--f lavfi -i nullsrc=s=2048x2048:d=4 \
+-f lavfi -i color=white:s=2048x2048:d=4 \
 -filter_complex "
-noise=alls=35:allf=t,
-eq=contrast=3.4:brightness=0.18,
-colorchannelmixer=rr=1.15:gg=0.9:bb=0.55,
-tblend=all_mode=average,
-gblur=sigma=1.5,
-format=yuv420p
+noise=alls=25:allf=t,
+eq=contrast=2.8:brightness=-0.1,
+curves=master='0/0 0.4/0.1 1/1',
+format=rgb24
 " \
 -r 30 \
 -movflags +faststart \
 "${OUT}"
 `.replace(/\n/g, " ");
+
 
 console.log("Building sparkle texture…");
 
