@@ -45,12 +45,8 @@ ffmpeg -y
 -loop 1 -i "${TEMPLATE}"
 -loop 1 -i "${SPARKLE_PNG}"
 -i "${GLOW_MP4}"
- -filter_complex "
- -filter_complex "
-  /* background */
+-filter_complex "
   [0:v]scale=1280:720,format=rgba[bg];
-
-  /* transparent text layer */
   color=color=black@0.0:s=1280x720,format=rgba,
   drawtext=fontfile=${FONT}:
     text=HAPPY\\ BIRTHDAY:
@@ -59,18 +55,15 @@ ffmpeg -y
     x=(w-text_w)/2:
     y=(h-text_h)/2[text];
 
-  /* procedural sparkle (static glitter) */
-  noise=alls=20:allf=t+u,
+  noise=alls=20:allf=u,
   format=rgba,
-  colorchannelmixer=rr=1:gg=1:bb=1:aa=1[sparkle_raw];
+  colorchannelmixer=rr=1:gg=1:bb=1:aa=1[sparkle];
 
-  [sparkle_raw][text]overlay=0:0:format=auto[text_sparkle];
+  [sparkle][text]overlay=0:0:format=auto[text_sparkle];
 
-  /* procedural glow from text */
   [text]gblur=sigma=18,
         colorchannelmixer=rr=1:gg=0.85:bb=0.3:aa=1[glow];
 
-  /* composite */
   [bg][text_sparkle]overlay=0:0[tmp];
   [tmp][glow]overlay=0:0
 "
