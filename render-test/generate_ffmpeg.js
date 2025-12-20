@@ -40,18 +40,29 @@ for (const f of [TEMPLATE, FONT, SPARKLE]) {
 }
 
 // ---------- FFMPEG ----------
-const ffmpegCmd =
+ const ffmpegCmd =
 `ffmpeg -y -loop 1 -i "${TEMPLATE}" -i "${SPARKLE}" ` +
 `-filter_complex ` +
 `"[0:v]scale=1280:720,format=rgba[bg];` +
-`[1:v]scale=1280:720,format=yuva420p,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='lum(X,Y)'[sparkle];` +
+
+/* sparkle video */
+`[1:v]scale=1280:720,format=rgba[sparkle];` +
+
+/* text alpha mask */
 `color=black:s=1280x720,drawtext=fontfile=${FONT}:` +
 `text='HAPPY\\\\ BIRTHDAY':fontsize=120:fontcolor=white:` +
-`x=(w-text_w)/2:y=(h-text_h)/2,format=yuva420p[text];` +
-`[sparkle][text]alphamerge[textfx];` +
-`[bg][textfx]overlay=0:0"` +
-` -t 4 -shortest -preset ultrafast -crf 28 -pix_fmt yuv420p "${OUTPUT_FILE}"`;
+`x=(w-text_w)/2:y=(h-text_h)/2,format=rgba[text];` +
 
+/* extract text alpha */
+`[text]alphaextract[text_alpha];` +
+
+/* apply alpha to sparkle */
+`[sparkle][text_alpha]alphamerge[text_fx];` +
+
+/* composite */
+`[bg][text_fx]overlay=0:0"` +
+
+` -t 4 -shortest -preset ultrafast -crf 28 -pix_fmt yuv420p "${OUTPUT_FILE}"`;
 
 console.log("Running FFmpeg…");
 
