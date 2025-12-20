@@ -40,7 +40,7 @@ for (const f of [TEMPLATE, FONT, SPARKLE_PNG, GLOW_MP4]) {
 }
 
 // ---------- FFMPEG ----------
- const ffmpegCmd = `
+const ffmpegCmd = `
 ffmpeg -y \
 -loop 1 -i "${TEMPLATE}" \
 -filter_complex "
@@ -56,19 +56,15 @@ y=h/2-text_h/2[text];
 
 [text]split=3[text_main][text_mask][text_glow];
 
-/* --- PROCEDURAL SPARKLE SOURCE --- */
 nullsrc=s=1280x720,format=rgba,
 noise=alls=20:allf=u[sparkle];
 
-/* --- MASK SPARKLE INTO TEXT --- */
 [text_mask]alphaextract[mask];
 [sparkle][mask]alphamerge[text_sparkle];
 
-/* --- GLOW FROM TEXT --- */
 [text_glow]gblur=sigma=14,
 colorchannelmixer=rr=1:gg=0.85:bb=0.3:aa=0.85[glow];
 
-/* --- FINAL COMPOSITE --- */
 [bg][glow]overlay=0:0[tmp1];
 [tmp1][text_sparkle]overlay=0:0[tmp2];
 [tmp2][text_main]overlay=0:0
@@ -78,7 +74,8 @@ colorchannelmixer=rr=1:gg=0.85:bb=0.3:aa=0.85[glow];
 -preset ultrafast \
 -crf 28 \
 "${OUTPUT_FILE}"
-`.replace(/\\n/g, " ");
+`.replace(/\n/g, " ");
+
 
 console.log("Running FFmpeg…");
 
