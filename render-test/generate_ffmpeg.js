@@ -48,26 +48,27 @@ ffmpeg -y
  -filter_complex "
   [0:v]scale=1280:720,format=rgba[bg];
 
-  [1:v]scale=1280:720,format=rgba[sparkle];
-
-  [2:v]scale=1280:720,format=rgba,gblur=sigma=12[glow];
-
-  color=black:s=1280x720,format=rgba,
+  [1:v]scale=1280:720,format=rgba,
   drawtext=fontfile=${FONT}:
     text=HAPPY\\ BIRTHDAY:
     fontsize=120:
     fontcolor=white:
     x=(w-text_w)/2:
-    y=(h-text_h)/2[txt];
+    y=(h-text_h)/2[text_glitter];
 
-  [txt]alphaextract[mask];
-
-  [sparkle][mask]alphamerge[text_glitter];
-  [glow][mask]alphamerge[text_glow];
+  [2:v]scale=1280:720,format=rgba,
+  gblur=sigma=18,
+  drawtext=fontfile=${FONT}:
+    text=HAPPY\\ BIRTHDAY:
+    fontsize=120:
+    fontcolor=white:
+    x=(w-text_w)/2:
+    y=(h-text_h)/2[text_glow];
 
   [bg][text_glitter]overlay=0:0[tmp];
   [tmp][text_glow]overlay=0:0
 "
+
 -t 4
 -shortest
 -preset ultrafast
