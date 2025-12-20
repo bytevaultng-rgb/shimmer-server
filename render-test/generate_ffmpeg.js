@@ -56,15 +56,21 @@ y=h/2-text_h/2[text];
 
 [text]split=3[text_main][text_mask][text_glow];
 
+/* sparkle source */
 nullsrc=s=1280x720,format=rgba,
-noise=alls=20:allf=u[sparkle];
+noise=alls=40:allf=u,
+eq=contrast=2.5:brightness=0.15,
+colorchannelmixer=rr=1:gg=0.9:bb=0.6:aa=1[sparkle];
 
+/* sparkle mask */
 [text_mask]alphaextract[mask];
 [sparkle][mask]alphamerge[text_sparkle];
 
-[text_glow]gblur=sigma=14,
-colorchannelmixer=rr=1:gg=0.85:bb=0.3:aa=0.85[glow];
+/* glow */
+[text_glow]gblur=sigma=20,
+colorchannelmixer=rr=1:gg=0.85:bb=0.3:aa=1[glow];
 
+/* compose */
 [bg][glow]overlay=0:0[tmp1];
 [tmp1][text_sparkle]overlay=0:0[tmp2];
 [tmp2][text_main]overlay=0:0
@@ -72,7 +78,7 @@ colorchannelmixer=rr=1:gg=0.85:bb=0.3:aa=0.85[glow];
 -t 4 \
 -pix_fmt yuv420p \
 -preset ultrafast \
--crf 28 \
+-crf 26 \
 "${OUTPUT_FILE}"
 `.replace(/\n/g, " ");
 
