@@ -1,6 +1,6 @@
 /**
  * FFmpeg Render Worker
- * Premium Sparkling Text using Alpha Particle Video
+ * Premium Sparkling Text (LUMA-MASKED particles)
  */
 
 const { exec } = require("child_process");
@@ -40,10 +40,9 @@ for (const f of [TEMPLATE, FONT, PARTICLES]) {
   }
 }
 
-// ---------- TEXT (later this becomes dynamic) ----------
 const TEXT = "HAPPY BIRTHDAY";
 
-// ---------- FFMPEG COMMAND ----------
+// ---------- FFMPEG ----------
 const ffmpegCmd = `
 ffmpeg -y \
 -loop 1 -i "${TEMPLATE}" \
@@ -58,20 +57,23 @@ fontsize=150:
 fontcolor=white:
 x=(w-text_w)/2:
 y=(h-text_h)/2,
-format=rgba[text];
+format=rgba[txt];
 
-[text]alphaextract[text_mask];
+[txt]alphaextract[txt_mask];
 
-[1:v]scale=1280:720,format=rgba[particles];
+[1:v]scale=1280:720,format=rgba,
+format=gray,
+eq=contrast=2.5:brightness=0.1[p_luma];
 
-[particles][text_mask]alphamerge[sparkle_text];
+[p_luma][txt_mask]alphamerge[sparkle_txt];
 
-[text]gblur=sigma=22[glow];
+[txt]gblur=sigma=22[glow];
 
 [bg][glow]overlay[tmp1];
-[tmp1][sparkle_text]overlay[tmp2];
-[tmp2][text]overlay
+[tmp1][sparkle_txt]overlay[tmp2];
+[tmp2][txt]overlay
 " \
+-map 0:v \
 -t 4 \
 -pix_fmt yuv420p \
 -movflags +faststart \
@@ -84,11 +86,6 @@ exec(ffmpegCmd, (err, stdout, stderr) => {
   if (err) {
     console.error("❌ FFmpeg failed");
     console.error(stderr);
-    process.exit(1);
-  }
-
-  if (!fs.existsSync(OUTPUT_FILE)) {
-    console.error("❌ Output file missing");
     process.exit(1);
   }
 
