@@ -47,31 +47,31 @@ const ffmpegCmd = `
 ffmpeg -y \
 -loop 1 -i "${TEMPLATE}" \
 -stream_loop -1 -i "${PARTICLES}" \
--filter_complex "
-[0:v]scale=1280:720,format=rgba[bg];
+ -filter_complex "
+  [0:v]scale=1280:720,format=rgba[bg];
+  [1:v]scale=1280:720,format=rgba[fx];
 
-[bg]
-drawtext=fontfile=${FONT}:
-text='${TEXT}':
-fontsize=150:
-fontcolor=white:
-x=(w-text_w)/2:
-y=(h-text_h)/2,
-format=rgba[txt];
+  color=black:s=1280x720,
+  drawtext=fontfile=${FONT}:
+    text=HAPPY\\ BIRTHDAY:
+    fontsize=120:
+    fontcolor=white:
+    x=(w-text_w)/2:
+    y=(h-text_h)/2,
+  format=gray,
+  eq=contrast=3.5:brightness=0.05[mask];
 
-[txt]alphaextract[txt_mask];
+  [fx]format=gray,
+      eq=contrast=2.2:brightness=0.1,
+      gblur=sigma=0.6[fx_luma];
 
-[1:v]scale=1280:720,format=rgba,
-format=gray,
-eq=contrast=2.5:brightness=0.1[p_luma];
+  [fx_luma][mask]alphamerge[textfx];
 
-[p_luma][txt_mask]alphamerge[sparkle_txt];
+  [textfx]colorchannelmixer=rr=1.2:gg=0.95:bb=0.6[textgold];
+  [textgold]gblur=sigma=14[glow];
 
-[txt]gblur=sigma=22[glow];
-
-[bg][glow]overlay[tmp1];
-[tmp1][sparkle_txt]overlay[tmp2];
-[tmp2][txt]overlay
+  [bg][glow]overlay=0:0[tmp];
+  [tmp][textgold]overlay=0:0
 " \
 -map 0:v \
 -t 4 \
