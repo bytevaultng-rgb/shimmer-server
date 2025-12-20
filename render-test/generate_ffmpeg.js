@@ -45,29 +45,30 @@ ffmpeg -y
 -loop 1 -i "${TEMPLATE}"
 -loop 1 -i "${SPARKLE_PNG}"
 -i "${GLOW_MP4}"
--filter_complex "
+ -filter_complex "
   [0:v]scale=1280:720,format=rgba[bg];
+
   color=color=black@0.0:s=1280x720,format=rgba,
   drawtext=fontfile=${FONT}:
     text=HAPPY\\ BIRTHDAY:
     fontsize=120:
     fontcolor=white@1.0:
     x=(w-text_w)/2:
-    y=(h-text_h)/2[text];
+    y=(h-text_h)/2,
+  split=2[text_a][text_b];
 
   noise=alls=20:allf=u,
   format=rgba,
   colorchannelmixer=rr=1:gg=1:bb=1:aa=1[sparkle];
 
-  [sparkle][text]overlay=0:0:format=auto[text_sparkle];
+  [sparkle][text_a]overlay=0:0:format=auto[text_sparkle];
 
-  [text]gblur=sigma=18,
-        colorchannelmixer=rr=1:gg=0.85:bb=0.3:aa=1[glow];
+  [text_b]gblur=sigma=18,
+          colorchannelmixer=rr=1:gg=0.85:bb=0.3:aa=1[glow];
 
   [bg][text_sparkle]overlay=0:0[tmp];
   [tmp][glow]overlay=0:0
 "
-
 
 -t 4
 -shortest
