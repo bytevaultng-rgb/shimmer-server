@@ -1,11 +1,13 @@
 /**
- * FFmpeg Render Worker
- * Premium Sparkling Text (LUMA-MASKED particles)
+ * FFmpeg Worker – Render → Upload to R2 → Print Public Link
  */
 
 const { exec } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
+
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
 // ---------- SAFETY ----------
 if (!process.env.RUN_RENDER) {
@@ -19,13 +21,10 @@ const ROOT = __dirname;
 
 const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
 const FONT = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
-const PARTICLES = path.join(ROOT, "effects", "golden_particles_alpha.mov");
+const SPARKLE = path.join(ROOT, "effects", "sparkle.mp4");
 
 const OUTPUT_DIR = path.join(ROOT, "renders");
-const OUTPUT_FILE = path.join(
-  OUTPUT_DIR,
-  `sparkle_${Date.now()}.mp4`
-);
+const OUTPUT_FILE = path.join(OUTPUT_DIR, "sparkle_text_test.mp4");
 
 // ---------- ENSURE DIR ----------
 if (!fs.existsSync(OUTPUT_DIR)) {
@@ -33,21 +32,19 @@ if (!fs.existsSync(OUTPUT_DIR)) {
 }
 
 // ---------- VALIDATE INPUT ----------
-for (const f of [TEMPLATE, FONT, PARTICLES]) {
+for (const f of [TEMPLATE, FONT, SPARKLE]) {
   if (!fs.existsSync(f)) {
     console.error("Missing file:", f);
     process.exit(1);
   }
 }
 
-const TEXT = "HAPPY BIRTHDAY";
-
 // ---------- FFMPEG ----------
 const ffmpegCmd = `
-ffmpeg -y \
--loop 1 -i "${TEMPLATE}" \
--stream_loop -1 -i "${PARTICLES}" \
- -filter_complex "
+ffmpeg -y
+-loop 1 -i "${TEMPLATE}"
+-i "${SPARKLE}"
+-filter_complex "
   [0:v]scale=1280:720,format=rgba[bg];
   [1:v]scale=1280:720,format=rgba[fx];
 
@@ -58,38 +55,66 @@ ffmpeg -y \
     fontcolor=white:
     x=(w-text_w)/2:
     y=(h-text_h)/2,
-  format=gray,
-  eq=contrast=3.5:brightness=0.05[mask];
+  format=gray[mask];
 
-  [fx]format=gray,
-      eq=contrast=2.2:brightness=0.1,
-      gblur=sigma=0.6[fx_luma];
-
-  [fx_luma][mask]alphamerge[textfx];
-
-  [textfx]colorchannelmixer=rr=1.2:gg=0.95:bb=0.6[textgold];
-  [textgold]gblur=sigma=14[glow];
-
-  [bg][glow]overlay=0:0[tmp];
-  [tmp][textgold]overlay=0:0
-" \
--map 0:v \
--t 4 \
--pix_fmt yuv420p \
--movflags +faststart \
+  [fx][mask]alphamerge[textfx];
+  [bg][textfx]overlay=0:0
+"
+-t 4
+-shortest
+-preset ultrafast
+-crf 28
+-pix_fmt yuv420p
 "${OUTPUT_FILE}"
 `.replace(/\n/g, " ");
 
-console.log("▶ Rendering premium sparkle text…");
 
-exec(ffmpegCmd, (err, stdout, stderr) => {
+console.log("Running FFmpeg…");
+
+exec(ffmpegCmd, async (err, stdout, stderr) => {
   if (err) {
     console.error("❌ FFmpeg failed");
-    console.error(stderr);
+    console.error(stderr); // VERY IMPORTANT
+    process.exit(1);
+  }
+
+  if (!fs.existsSync(OUTPUT_FILE)) {
+    console.error("Render failed: output missing");
     process.exit(1);
   }
 
   console.log("✅ Render SUCCESS");
-  console.log("OUTPUT:", OUTPUT_FILE);
+
+  // ---------- R2 CLIENT ----------
+  const s3 = new S3Client({
+    region: "auto",
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    },
+  });
+
+  const fileBuffer = fs.readFileSync(OUTPUT_FILE);
+  const key = `renders/sparkle_${Date.now()}_${crypto.randomBytes(4).toString("hex")}.mp4`;
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET,
+      Key: key,
+      Body: fileBuffer,
+      ContentType: "video/mp4",
+    })
+  );
+
+  const publicUrl = `${process.env.R2_PUBLIC_BASE}/${key}`;
+
+  console.log("🎉 UPLOAD SUCCESS");
+  console.log("PUBLIC LINK:", publicUrl);
+
+  console.log("Worker finished job. Going idle.");
   process.exit(0);
 });
+
+
+
