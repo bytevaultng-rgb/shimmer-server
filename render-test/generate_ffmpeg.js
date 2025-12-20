@@ -40,45 +40,33 @@ for (const f of [TEMPLATE, FONT, SPARKLE]) {
 }
 
 // ---------- FFMPEG ----------
-const ffmpegCmd = `
+ const ffmpegCmd = `
 ffmpeg -y
 -loop 1 -i "${TEMPLATE}"
 -i "${SPARKLE}"
 -filter_complex "
-[0:v]scale=1280:720,format=rgba[bg];
+  /* 1️⃣ Background */
+  [0:v]scale=1280:720,format=rgba[bg];
 
-[1:v]scale=1280:720,format=rgba,
-eq=contrast=2.8:brightness=0.08:saturation=1.4,
-gblur=sigma=0.4[fx];
+  /* 2️⃣ Sparkle → RGBA with alpha from luminance */
+  [1:v]scale=1280:720,format=yuva420p,
+  geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='lum(X,Y)'[sparkle_rgba];
 
-color=black:s=1280x720,
-drawtext=fontfile=${FONT}:
- text=HAPPY\\ BIRTHDAY:
- fontsize=130:
- fontcolor=white:
- x=(w-text_w)/2:
- y=(h-text_h)/2,
-format=gray,
-eq=contrast=3.8:brightness=0.02[mask];
+  /* 3️⃣ Text rendered as alpha mask */
+  color=black:s=1280x720,
+  drawtext=fontfile=${FONT}:
+    text='HAPPY\\ BIRTHDAY':
+    fontsize=120:
+    fontcolor=white:
+    x=(w-text_w)/2:
+    y=(h-text_h)/2,
+  format=yuva420p[text_mask];
 
-[fx][mask]alphamerge[sparkle];
+  /* 4️⃣ Sparkle ∩ Text */
+  [sparkle_rgba][text_mask]alphamerge[text_fx];
 
-[sparkle]
-colorchannelmixer=rr=1.25:gg=1.05:bb=0.75,
-eq=contrast=1.4:brightness=0.06[sparkle_gold];
-
-[sparkle_gold]gblur=sigma=12[glow];
-
-[bg][glow]overlay=0:0[tmp1];
-[tmp1][sparkle_gold]overlay=0:0[tmp2];
-
-[tmp2]
-drawtext=fontfile=${FONT}:
- text=HAPPY\\ BIRTHDAY:
- fontsize=130:
- fontcolor=white:
- x=(w-text_w)/2:
- y=(h-text_h)/2
+  /* 5️⃣ Composite */
+  [bg][text_fx]overlay=0:0
 "
 -t 4
 -shortest
@@ -86,7 +74,7 @@ drawtext=fontfile=${FONT}:
 -crf 28
 -pix_fmt yuv420p
 "${OUTPUT_FILE}"
-`.replace(/\n/g, " ");
+`.replace(/\\n/g, " ");
 
 
 
