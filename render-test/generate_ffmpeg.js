@@ -1,16 +1,32 @@
 /**
- * Luxury Box Open + Confetti + Text
+ * Stable Luxury Box + Confetti + Text + Name Pop + Shimmer
  */
 
 const { exec } = require("child_process");
 const path = require("path");
+const fs = require("fs");
 
-const ASSETS  = path.join(__dirname, "assets");
-const EFFECTS = path.join(__dirname, "effects");
-const OUTPUT  = path.join(__dirname, "happy_birthday_box.mp4");
+const BASE    = __dirname;
+const ASSETS  = path.join(BASE, "assets");
+const EFFECTS = path.join(BASE, "effects");
+const OUTPUT  = path.join(BASE, "happy_birthday_box.mp4");
 
-// later this can come from user input
+// simple inputs (later from PHP)
 const RECEIVER_NAME = "MARYAM";
+const USE_SHIMMER = true; // toggle ON/OFF
+
+const SHIMMER_INPUT = USE_SHIMMER
+  ? `-i "${EFFECTS}/sparkle.mp4"`
+  : "";
+
+const SHIMMER_OVERLAY = USE_SHIMMER
+  ? `
+    [4:v]scale=1080:1350,format=rgba,trim=0:4,setpts=PTS-STARTPTS[sh];
+    [scene4][sh]overlay=0:0:enable='gte(t,1.6)'[scene5];
+  `
+  : `
+    [scene4]null[scene5];
+  `;
 
 const cmd = `
 ffmpeg -y
@@ -18,22 +34,19 @@ ffmpeg -y
 -i "${ASSETS}/box_base.png"
 -i "${ASSETS}/box_lid.png"
 -i "${EFFECTS}/confetti.mp4"
+${SHIMMER_INPUT}
 -filter_complex "
 [0:v]scale=1080:1350,format=rgba[bg];
 [1:v]scale=320:-1,format=rgba[box];
 [2:v]scale=320:-1,format=rgba[lid];
 
-[lid]rotate='if(gte(t,0.8)*lt(t,1.3),-(t-0.8)*PI/1.5,-PI/3)':c=none[lid_rot];
+[lid]rotate=-0.6:c=none[lid_rot];
 
 [bg][box]overlay=(W-w)/2:(H-h)/2[scene1];
+[scene1][lid_rot]overlay=(W-w)/2:(H-h)/2-180:enable='gte(t,1)'[scene2];
 
-[scene1][lid_rot]overlay=
-x=(W-w)/2:
-y='(H-h)/2-160 - if(gte(t,0.8)*lt(t,1.3),(t-0.8)*140,140)'
-[scene2];
-
-[3:v]scale=1080:1350,format=rgba,trim=start=1.2:end=3.5,setpts=PTS-STARTPTS[conf];
-[scene2][conf]overlay=0:0:enable='gte(t,1.2)'[scene3];
+[3:v]scale=1080:1350,format=rgba,trim=1:4,setpts=PTS-STARTPTS[conf];
+[scene2][conf]overlay=0:0:enable='gte(t,1)'[scene3];
 
 [scene3]drawtext=
 fontfile=${ASSETS}/fonts/PlayfairDisplay-Bold.ttf:
@@ -41,20 +54,35 @@ text='HAPPY BIRTHDAY':
 fontsize=96:
 fontcolor=white:
 x=(w-text_w)/2:
-y='(h/2+120)-(t-1.5)*120':
-alpha='if(gte(t,1.5),(t-1.5)/0.6,0)':
+y=(h/2-220):
+alpha='if(gte(t,1.4),(t-1.4)/0.8,0)':
 shadowcolor=black:
 shadowx=3:
 shadowy=3
-[final]
+[scene4];
+
+[scene4]drawtext=
+fontfile=${ASSETS}/fonts/PlayfairDisplay-Bold.ttf:
+text='${RECEIVER_NAME}':
+fontsize=72:
+fontcolor=gold:
+x=(w-text_w)/2:
+y=(h/2-120):
+alpha='if(gte(t,2.0),(t-2.0)/0.6,0)':
+shadowcolor=black:
+shadowx=2:
+shadowy=2
+[name];
+
+${SHIMMER_OVERLAY}
+
 "
--map "[final]"
+-map "[scene5]"
 -t 4
--r 30
+-r 25
 -pix_fmt yuv420p
 "${OUTPUT}"
 `.replace(/\n/g, " ");
-
 
 console.log("▶ Rendering luxury birthday video…");
 
