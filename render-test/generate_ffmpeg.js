@@ -23,11 +23,14 @@ ffmpeg -y
 [1:v]scale=320:-1,format=rgba[box];
 [2:v]scale=320:-1,format=rgba[lid];
 
-[lid]rotate='if(gte(t,0.8)*lt(t,1.3),-(t-0.8)*PI/1.5,-PI/3)':c=none,
-translate=y='if(gte(t,0.8)*lt(t,1.3),-(t-0.8)*280,-140)'[lid_anim];
+[lid]rotate='if(gte(t,0.8)*lt(t,1.3),-(t-0.8)*PI/1.5,-PI/3)':c=none[lid_rot];
 
 [bg][box]overlay=(W-w)/2:(H-h)/2[scene1];
-[scene1][lid_anim]overlay=(W-w)/2:(H-h)/2-160[scene2];
+
+[scene1][lid_rot]overlay=
+x=(W-w)/2:
+y='(H-h)/2-160 - if(gte(t,0.8)*lt(t,1.3),(t-0.8)*140,140)'
+[scene2];
 
 [3:v]scale=1080:1350,format=rgba,trim=start=1.2:end=3.5,setpts=PTS-STARTPTS[conf];
 [scene2][conf]overlay=0:0:enable='gte(t,1.2)'[scene3];
@@ -51,6 +54,7 @@ shadowy=3
 -pix_fmt yuv420p
 "${OUTPUT}"
 `.replace(/\n/g, " ");
+
 
 console.log("▶ Rendering luxury birthday video…");
 
