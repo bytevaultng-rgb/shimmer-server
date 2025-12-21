@@ -67,11 +67,9 @@ ffmpeg -y
   [bg][textfx]overlay=0:0[tmp];
 
   [2:v]geq=
-    r='255*random(1)':
-    g='255*random(2)':
-    b='255*random(3)':
-    a='255*random(4)',
-  boxblur=2:1,
+    lum='if(lt(random(1),0.015),255,0)':
+    a='if(lt(random(2),0.015),180,0)',
+  boxblur=3:1,
   fps=30[confetti];
 
   [tmp][confetti]overlay=0:0
