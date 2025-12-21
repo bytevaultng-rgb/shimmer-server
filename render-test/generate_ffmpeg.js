@@ -1,103 +1,106 @@
 /**
- * FFmpeg Worker – Render → Upload to R2 → Print Public Link
+ * Luxury Box Open + Glow + Confetti + Text
  */
 
 const { exec } = require("child_process");
-const fs = require("fs");
 const path = require("path");
-const crypto = require("crypto");
 
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const ASSETS  = path.join(__dirname, "..", "assets");
+const EFFECTS = path.join(__dirname,"effects");
+const OUTPUT  = path.join(__dirname, "happy_birthday_box.mp4");
 
-// ---------- SAFETY ----------
-if (!process.env.RUN_RENDER) {
-  console.log("RUN_RENDER not set. Worker idle.");
-  setInterval(() => {}, 60_000);
-  return;
-}
+// You can later replace this dynamically
+const RECEIVER_NAME = "MARYAM";
 
-// ---------- PATHS ----------
-const ROOT = __dirname;
+const cmd = `
+ffmpeg -y
+-loop 1 -i "${ASSETS}/bg.png"
+-i "${ASSETS}/box_base.png"
+-i "${ASSETS}/box_lid.png"
+-i "${EFFECTS}/confetti.mp4"
+-filter_complex "
+[0:v]scale=1080:1350,format=rgba[bg];
+[1:v]scale=320:-1,format=rgba[box];
+[2:v]scale=320:-1,format=rgba[lid];
 
-const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
-const FONT = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
-const SPARKLE = path.join(ROOT, "effects", "sparkle.mp4");
+# Lid open animation
+[lid]
+rotate=
+if(between(t,0.8,1.3),
+-PI/3*(t-0.8)/0.5,
+-PI/3):
+c=none:ow=rotw(iw):oh=roth(ih),
+translate=y=
+if(between(t,0.8,1.3),
+-140*(t-0.8)/0.5,
+-140)
+[lid_anim];
 
-const OUTPUT_DIR = path.join(ROOT, "renders");
-const OUTPUT_FILE = path.join(OUTPUT_DIR, "sparkle_text_test.mp4");
+# Place box
+[bg][box]overlay=(W-w)/2:(H-h)/2[scene1];
+[scene1][lid_anim]overlay=(W-w)/2:(H-h)/2-160[scene2];
 
-// ---------- ENSURE DIR ----------
-if (!fs.existsSync(OUTPUT_DIR)) {
-  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-}
+# Golden glow from inside box
+[scene2]
+drawbox=
+x=(w/2-120):
+y=(h/2+40):
+w=240:
+h=120:
+color=yellow@0.15:
+t=fill:
+enable='between(t,1.0,2.2)',
+boxblur=20:1
+[glow_scene];
 
-// ---------- VALIDATE INPUT ----------
-for (const f of [TEMPLATE, FONT, SPARKLE]) {
-  if (!fs.existsSync(f)) {
-    console.error("Missing file:", f);
-    process.exit(1);
-  }
-}
+# Confetti overlay
+[3:v]scale=1080:1350,format=rgba,trim=1.2:3.5,setpts=PTS-STARTPTS[conf];
+[glow_scene][conf]overlay=0:0:enable='gte(t,1.2)'[scene3];
 
-// ---------- FFMPEG ----------
- const ffmpegCmd =
-`ffmpeg -y -loop 1 -i "${TEMPLATE}" -i "${SPARKLE}" -filter_complex "` +
-`[0:v]scale=1280:720,format=rgba[bg];` +
-`[1:v]scale=1280:720,format=rgba[sparkle];` +
-`color=black:s=1280x720,drawtext=fontfile=${FONT}:` +
-`text='HAPPY\\\\ BIRTHDAY':fontsize=120:fontcolor=white:` +
-`x=(w-text_w)/2:y=(h-text_h)/2,format=rgba[text];` +
-`[text]alphaextract[text_alpha];` +
-`[sparkle][text_alpha]alphamerge[sparkle_text];` +
-`[bg][sparkle_text]overlay=0:0"` +
-` -t 4 -pix_fmt yuv420p "${OUTPUT_FILE}"`;
+# HAPPY BIRTHDAY text (rises from box)
+[scene3]
+drawtext=
+fontfile=${ASSETS}/fonts/PlayfairDisplay-Bold.ttf:
+text='HAPPY BIRTHDAY':
+fontsize=96:
+fontcolor=white:
+alpha='if(gte(t,1.5),(t-1.5)/0.6,0)':
+x=(w-text_w)/2:
+y='(h/2+120)-min(120,(t-1.5)*120)':
+shadowcolor=black:
+shadowx=3:
+shadowy=3
+[scene4];
 
-console.log("Running FFmpeg…");
+# Receiver name pop
+[scene4]
+drawtext=
+fontfile=${ASSETS}/fonts/PlayfairDisplay-Bold.ttf:
+text='${RECEIVER_NAME}':
+fontsize=72:
+fontcolor=gold:
+alpha='if(gte(t,2.4),(t-2.4)/0.4,0)':
+x=(w-text_w)/2:
+y=(h/2+40):
+shadowcolor=black:
+shadowx=2:
+shadowy=2
+[final]
+"
+-map "[final]"
+-t 4
+-r 30
+-pix_fmt yuv420p
+"${OUTPUT}"
+`.replace(/\n/g, " ");
 
-exec(ffmpegCmd, async (err, stdout, stderr) => {
+console.log("▶ Rendering luxury birthday video…");
+
+exec(cmd, (err, stdout, stderr) => {
   if (err) {
     console.error("❌ FFmpeg failed");
-    console.error(stderr); // VERY IMPORTANT
-    process.exit(1);
+    console.error(stderr);
+    return;
   }
-
-  if (!fs.existsSync(OUTPUT_FILE)) {
-    console.error("Render failed: output missing");
-    process.exit(1);
-  }
-
-  console.log("✅ Render SUCCESS");
-
-  // ---------- R2 CLIENT ----------
-  const s3 = new S3Client({
-    region: "auto",
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-    },
-  });
-
-  const fileBuffer = fs.readFileSync(OUTPUT_FILE);
-  const key = `renders/sparkle_${Date.now()}_${crypto.randomBytes(4).toString("hex")}.mp4`;
-
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: process.env.R2_BUCKET,
-      Key: key,
-      Body: fileBuffer,
-      ContentType: "video/mp4",
-    })
-  );
-
-  const publicUrl = `${process.env.R2_PUBLIC_BASE}/${key}`;
-
-  console.log("🎉 UPLOAD SUCCESS");
-  console.log("PUBLIC LINK:", publicUrl);
-
-  console.log("Worker finished job. Going idle.");
-  process.exit(0);
+  console.log("✅ Render complete:", OUTPUT);
 });
-
-
-
