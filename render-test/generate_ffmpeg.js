@@ -5,7 +5,7 @@
 const { exec } = require("child_process");
 const path = require("path");
 
-const ASSETS  = path.join(__dirname, "..", "assets");
+const ASSETS = path.join(__dirname, "..", "SHIMMER-SERVER", "assets");
 const EFFECTS = path.join(__dirname,"effects");
 const OUTPUT  = path.join(__dirname, "happy_birthday_box.mp4");
 
