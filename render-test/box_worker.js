@@ -1,5 +1,5 @@
 /**
- * FFmpeg Worker – Box Open → Confetti → Text → Upload to R2 → Print Public Link
+ * FFmpeg Worker – Production Box Reveal → Upload → Public Link
  */
 
 const { exec } = require("child_process");
@@ -24,9 +24,8 @@ const EFFECTS = path.join(ROOT, "effects");
 const BG        = path.join(ASSETS, "bg.png");
 const BOX_BASE  = path.join(ASSETS, "box_base.png");
 const BOX_LID   = path.join(ASSETS, "box_lid.png");
-const FONT = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
-
 const CONFETTI  = path.join(EFFECTS, "confetti.mp4");
+const FONT      = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
 
 const OUTPUT_DIR  = path.join(ROOT, "renders");
 const OUTPUT_FILE = path.join(OUTPUT_DIR, "box_birthday.mp4");
@@ -36,8 +35,8 @@ if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 }
 
-// ---------- VALIDATE INPUT ----------
-for (const f of [BG, BOX_BASE, BOX_LID, FONT, CONFETTI]) {
+// ---------- VALIDATE ----------
+for (const f of [BG, BOX_BASE, BOX_LID, CONFETTI, FONT]) {
   if (!fs.existsSync(f)) {
     console.error("Missing file:", f);
     process.exit(1);
@@ -56,13 +55,23 @@ ffmpeg -y
 [1:v]scale=320:-1,format=rgba[box];
 [2:v]scale=320:-1,format=rgba[lid];
 
-[lid]rotate=-0.6:c=none[lid_rot];
+[bg][box]overlay=
+x=(W-w)/2:
+y='-450+min(450,t*450)'
+[scene1];
 
-[bg][box]overlay=(W-w)/2:(H-h)/2[scene1];
-[scene1][lid_rot]overlay=(W-w)/2:(H-h)/2-180:enable='gte(t,1)'[scene2];
+[lid]rotate='-PI/3*min(1,(t-0.8)/0.6)':c=none[lid_anim];
+[scene1][lid_anim]overlay=
+x=(W-w)/2:
+y='-450+min(450,t*450)-160'
+[scene2];
 
-[3:v]scale=1080:1350,format=rgba,trim=1:4,setpts=PTS-STARTPTS[conf];
-[scene2][conf]overlay=0:0:enable='gte(t,1)'[scene3];
+[3:v]scale=320:200,format=rgba,trim=1.2:4,setpts=PTS-STARTPTS[conf];
+[scene2][conf]overlay=
+x=(W-320)/2:
+y='(H/2)-40':
+enable='gte(t,1.2)'
+[scene3];
 
 [scene3]drawtext=
 fontfile=${FONT}:
@@ -70,8 +79,8 @@ text=HAPPY\\ BIRTHDAY:
 fontsize=96:
 fontcolor=white:
 x=(w-text_w)/2:
-y=(h/2-200):
-alpha='if(gte(t,1.5),(t-1.5)/0.8,0)':
+y='(h/2+120)-(t-1.6)*120':
+alpha='if(gte(t,1.6),(t-1.6)/0.8,0)':
 shadowcolor=black:
 shadowx=3:
 shadowy=3
@@ -92,14 +101,8 @@ exec(ffmpegCmd, async (err, stdout, stderr) => {
     process.exit(1);
   }
 
-  if (!fs.existsSync(OUTPUT_FILE)) {
-    console.error("Render failed: output missing");
-    process.exit(1);
-  }
-
   console.log("✅ Render SUCCESS");
 
-  // ---------- R2 CLIENT ----------
   const s3 = new S3Client({
     region: "auto",
     endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -109,14 +112,14 @@ exec(ffmpegCmd, async (err, stdout, stderr) => {
     },
   });
 
-  const fileBuffer = fs.readFileSync(OUTPUT_FILE);
+  const buffer = fs.readFileSync(OUTPUT_FILE);
   const key = `renders/box_${Date.now()}_${crypto.randomBytes(4).toString("hex")}.mp4`;
 
   await s3.send(
     new PutObjectCommand({
       Bucket: process.env.R2_BUCKET,
       Key: key,
-      Body: fileBuffer,
+      Body: buffer,
       ContentType: "video/mp4",
     })
   );
@@ -126,6 +129,5 @@ exec(ffmpegCmd, async (err, stdout, stderr) => {
   console.log("🎉 UPLOAD SUCCESS");
   console.log("PUBLIC LINK:", publicUrl);
 
-  console.log("Worker finished job. Going idle.");
   process.exit(0);
 });
