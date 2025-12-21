@@ -82,7 +82,8 @@ ffmpeg -y
 -crf 28
 -pix_fmt yuv420p
 "${OUTPUT_FILE}"
-`.replace(/\\n/g, " ");
+`.replace(/\n/g, " ");
+
 
 console.log("Running FFmpeg…");
 
