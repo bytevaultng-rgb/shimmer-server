@@ -1,5 +1,7 @@
 # Videos
 *.mp4
+!render-test/effects/confetti.mp4
+
 
 # FFmpeg binaries
 ffmpeg/
