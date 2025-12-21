@@ -49,36 +49,32 @@ const ffmpegCmd = `
 ffmpeg -y
 -loop 1 -i "${TEMPLATE}"
 -i "${SPARKLE}"
--i "${CONFETTI}"
+-f lavfi -i "nullsrc=s=1280x720:d=4"
 -filter_complex "
   [0:v]scale=1280:720,format=rgba[bg];
   [1:v]scale=1280:720,format=rgba[fx];
-  [2:v]scale=1280:720,format=rgba,trim=0:4,setpts=PTS-STARTPTS[conf];
 
   color=black:s=1280x720,
   drawtext=fontfile=${FONT}:
     text=HAPPY\\ BIRTHDAY:
-    fontsize=110:
-    fontcolor=white:
-    x=(w-text_w)/2:
-    y=h*0.30,
-  drawtext=fontfile=${FONT}:
-    text=${RECEIVER_NAME}:
     fontsize=120:
     fontcolor=white:
     x=(w-text_w)/2:
-    y=h*0.42,
-  drawtext=fontfile=${FONT}:
-    text=${MESSAGE_LINE}:
-    fontsize=56:
-    fontcolor=white:
-    x=(w-text_w)/2:
-    y=h*0.58,
+    y=(h-text_h)/2,
   format=gray[mask];
 
   [fx][mask]alphamerge[textfx];
   [bg][textfx]overlay=0:0[tmp];
-  [tmp][conf]overlay=0:0:enable='gte(t,0.5)'
+
+  [2:v]geq=
+    r='255*random(1)':
+    g='255*random(2)':
+    b='255*random(3)':
+    a='255*random(4)',
+  boxblur=2:1,
+  fps=30[confetti];
+
+  [tmp][confetti]overlay=0:0
 "
 -t 4
 -shortest
@@ -86,7 +82,7 @@ ffmpeg -y
 -crf 28
 -pix_fmt yuv420p
 "${OUTPUT_FILE}"
-`.replace(/\n/g, " ");
+`.replace(/\\n/g, " ");
 
 console.log("Running FFmpeg…");
 
