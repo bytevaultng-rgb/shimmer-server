@@ -54,18 +54,8 @@ ffmpeg -y
 -stream_loop -1 -i "${SPARKLE}"
 -stream_loop -1 -i "${MUSIC}"
 -filter_complex "
-[0:v]
-scale=1080:1920:force_original_aspect_ratio=decrease,
-pad=1080:1920:(ow-iw)/2:(oh-ih)/2,
-format=rgba[bg];
-
-[1:v]
-scale=1080:1920:force_original_aspect_ratio=decrease,
-pad=1080:1920:(ow-iw)/2:(oh-ih)/2,
-format=rgba,
-eq=saturation=1.4:contrast=1.1,
-colorbalance=rs=0.08:gs=0.04:bs=-0.05[fx];
-
+[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,format=rgba[bg];
+[1:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,format=rgba,eq=saturation=1.4:contrast=1.1,colorbalance=rs=0.08:gs=0.04:bs=-0.05[fx];
 color=black:s=1080x1920,
 drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':fontsize=120:fontcolor=white:x=(w-text_w)/2:y=(h/2)-260:enable='between(t,0,6)',
 drawtext=fontfile=${FONT}:text='${RECEIVER_NAME}':fontsize=110:fontcolor=white:x=(w-text_w)/2:y=(h/2)-260:enable='between(t,6,12)',
@@ -74,16 +64,10 @@ drawtext=fontfile=${FONT}:text='${MSG2}':fontsize=42:fontcolor=white:x=(w-text_w
 drawtext=fontfile=${FONT}:text='${MSG3}':fontsize=42:fontcolor=white:x=(w-text_w)/2:y=(h/2)+80:enable='between(t,20,24)',
 drawtext=fontfile=${FONT}:text='${MSG4}':fontsize=42:fontcolor=white:x=(w-text_w)/2:y=(h/2)+140:enable='gte(t,24)',
 format=gray[mask];
-
 [mask]boxblur=14:2[glowmask];
-
 [fx][glowmask]alphamerge[glow];
 [fx][mask]alphamerge[textfx];
-
-color=white@0.45:s=1080x1920,
-noise=alls=18:allf=t+u,
-format=rgba[confetti];
-
+color=white@0.45:s=1080x1920,noise=alls=18:allf=t+u,format=rgba[confetti];
 [bg][confetti]overlay=0:0[tmp1];
 [tmp1][glow]overlay=0:0[tmp2];
 [tmp2][textfx]overlay=0:0
@@ -98,7 +82,8 @@ format=rgba[confetti];
 -crf 28
 -pix_fmt yuv420p
 "${OUTPUT_FILE}"
-`;
+`.replace(/\n/g, " ");
+
 
 
 console.log("Running FFmpeg…");
