@@ -48,61 +48,31 @@ for (const f of [TEMPLATE, FONT, SPARKLE, CONFETTI]) {
 
 // ---------- FFMPEG ----------
 const ffmpegCmd = `
-ffmpeg -y
--loop 1 -i "${TEMPLATE}"
--stream_loop -1 -i "${SPARKLE}"
+ffmpeg -y \
+-loop 1 -i "${TEMPLATE}" \
+-stream_loop -1 -i "${SPARKLE}" \
 -filter_complex "
-  [0:v]scale=1280:720,format=rgba[bg];
-  [1:v]scale=1280:720,format=rgba[fx];
+[0:v]scale=1280:720,format=rgba[bg];
+[1:v]scale=1280:720,format=rgba[fx];
 
-  color=black:s=1280x720,
-  drawtext=fontfile=${FONT}:
-    text=HAPPY\\ BIRTHDAY:
-    fontsize=120:
-    fontcolor=white:
-    x=(w-text_w)/2:
-    y=h*0.45:
-    enable='between(t,0,6)',
-  drawtext=fontfile=${FONT}:
-    text=${RECEIVER_NAME}:
-    fontsize=110:
-    fontcolor=white:
-    x=(w-text_w)/2:
-    y=h*0.45:
-    enable='between(t,6,12)',
-  drawtext=fontfile=${FONT}:
-    text=${MESSAGE_LINE_1}:
-    fontsize=46:
-    fontcolor=white:
-    x=(w-text_w)/2:
-    y=h*0.60:
-    enable='between(t,12,16)',
-  drawtext=fontfile=${FONT}:
-    text=${MESSAGE_LINE_2}:
-    fontsize=46:
-    fontcolor=white:
-    x=(w-text_w)/2:
-    y=h*0.68:
-    enable='between(t,16,20)',
-  drawtext=fontfile=${FONT}:
-    text=${MESSAGE_LINE_3}:
-    fontsize=46:
-    fontcolor=white:
-    x=(w-text_w)/2:
-    y=h*0.76:
-    enable='gte(t,20)',
-  format=gray[mask];
+color=black:s=1280x720,
+drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':fontsize=120:fontcolor=white:x=(w-text_w)/2:y=h*0.42:enable='between(t,0,6)',
+drawtext=fontfile=${FONT}:text='IFEOMA':fontsize=110:fontcolor=white:x=(w-text_w)/2:y=h*0.42:enable='between(t,6,12)',
+drawtext=fontfile=${FONT}:text='Your vision lights the way for many.':fontsize=46:fontcolor=white:x=(w-text_w)/2:y=h*0.60:enable='between(t,12,16)',
+drawtext=fontfile=${FONT}:text='Thank you for leading with purpose, strength, and heart.':fontsize=46:fontcolor=white:x=(w-text_w)/2:y=h*0.68:enable='between(t,16,20)',
+drawtext=fontfile=${FONT}:text='May the year ahead reward you with joy, growth, and remarkable victories.':fontsize=46:fontcolor=white:x=(w-text_w)/2:y=h*0.76:enable='gte(t,20)',
+format=gray[mask];
 
-  [fx][mask]alphamerge[textfx];
-  [bg][textfx]overlay=0:0
-"
--t 30
--r 30
--preset ultrafast
--crf 28
--pix_fmt yuv420p
+[fx][mask]alphamerge[textfx];
+[bg][textfx]overlay=0:0
+" \
+-t 30 \
+-r 30 \
+-preset ultrafast \
+-crf 28 \
+-pix_fmt yuv420p \
 "${OUTPUT_FILE}"
-`.replace(/\n/g, " ");
+`;
 
 
 
