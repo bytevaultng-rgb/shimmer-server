@@ -1,96 +1,135 @@
 /**
- * Stable Luxury Box + Confetti + Text + Name Pop + Shimmer
+ * FFmpeg Worker – Render → Upload to R2 → Print Public Link
  */
 
 const { exec } = require("child_process");
-const path = require("path");
 const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
 
-const BASE    = __dirname;
-const ASSETS  = path.join(BASE, "assets");
-const EFFECTS = path.join(BASE, "effects");
-const OUTPUT  = path.join(BASE, "happy_birthday_box.mp4");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
-// simple inputs (later from PHP)
-const RECEIVER_NAME = "MARYAM";
-const USE_SHIMMER = true; // toggle ON/OFF
+// ---------- SAFETY ----------
+if (!process.env.RUN_RENDER) {
+  console.log("RUN_RENDER not set. Worker idle.");
+  setInterval(() => {}, 60_000);
+  return;
+}
 
-const SHIMMER_INPUT = USE_SHIMMER
-  ? `-i "${EFFECTS}/sparkle.mp4"`
-  : "";
+// ---------- PATHS ----------
+const ROOT = __dirname;
 
-const SHIMMER_OVERLAY = USE_SHIMMER
-  ? `
-    [4:v]scale=1080:1350,format=rgba,trim=0:4,setpts=PTS-STARTPTS[sh];
-    [scene4][sh]overlay=0:0:enable='gte(t,1.6)'[scene5];
-  `
-  : `
-    [scene4]null[scene5];
-  `;
+const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
+const FONT = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
+const SPARKLE = path.join(ROOT, "effects", "sparkle.mp4");
 
-const cmd = `
+const OUTPUT_DIR = path.join(ROOT, "renders");
+const OUTPUT_FILE = path.join(OUTPUT_DIR, "sparkle_text_test.mp4");
+
+// ---------- ENSURE DIR ----------
+if (!fs.existsSync(OUTPUT_DIR)) {
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+}
+
+// ---------- VALIDATE INPUT ----------
+for (const f of [TEMPLATE, FONT, SPARKLE]) {
+  if (!fs.existsSync(f)) {
+    console.error("Missing file:", f);
+    process.exit(1);
+  }
+}
+
+// ---------- FFMPEG ----------
+const ffmpegCmd = `
 ffmpeg -y
--loop 1 -i "${ASSETS}/bg.png"
--i "${ASSETS}/box_base.png"
--i "${ASSETS}/box_lid.png"
--i "${EFFECTS}/confetti.mp4"
-${SHIMMER_INPUT}
+-loop 1 -i "${TEMPLATE}"
+-i "${SPARKLE}"
+-i "${CONFETTI}"
 -filter_complex "
-[0:v]scale=1080:1350,format=rgba[bg];
-[1:v]scale=320:-1,format=rgba[box];
-[2:v]scale=320:-1,format=rgba[lid];
+  [0:v]scale=1280:720,format=rgba[bg];
+  [1:v]scale=1280:720,format=rgba[fx];
+  [2:v]scale=1280:720,format=rgba,trim=0:4,setpts=PTS-STARTPTS[conf];
 
-[lid]rotate=-0.6:c=none[lid_rot];
+  color=black:s=1280x720,
+  drawtext=fontfile=${FONT}:
+    text=HAPPY\\ BIRTHDAY:
+    fontsize=110:
+    fontcolor=white:
+    x=(w-text_w)/2:
+    y=h*0.30,
+  drawtext=fontfile=${FONT}:
+    text=${RECEIVER_NAME}:
+    fontsize=120:
+    fontcolor=white:
+    x=(w-text_w)/2:
+    y=h*0.42,
+  drawtext=fontfile=${FONT}:
+    text=${MESSAGE_LINE}:
+    fontsize=56:
+    fontcolor=white:
+    x=(w-text_w)/2:
+    y=h*0.58,
+  format=gray[mask];
 
-[bg][box]overlay=(W-w)/2:(H-h)/2[scene1];
-[scene1][lid_rot]overlay=(W-w)/2:(H-h)/2-180:enable='gte(t,1)'[scene2];
+  [fx][mask]alphamerge[textfx];
+  [bg][textfx]overlay=0:0[tmp];
 
-[3:v]scale=1080:1350,format=rgba,trim=1:4,setpts=PTS-STARTPTS[conf];
-[scene2][conf]overlay=0:0:enable='gte(t,1)'[scene3];
-
-[scene3]drawtext=
-fontfile=${ASSETS}/fonts/PlayfairDisplay-Bold.ttf:
-text='HAPPY BIRTHDAY':
-fontsize=96:
-fontcolor=white:
-x=(w-text_w)/2:
-y=(h/2-220):
-alpha='if(gte(t,1.4),(t-1.4)/0.8,0)':
-shadowcolor=black:
-shadowx=3:
-shadowy=3
-[scene4];
-
-[scene4]drawtext=
-fontfile=${ASSETS}/fonts/PlayfairDisplay-Bold.ttf:
-text='${RECEIVER_NAME}':
-fontsize=72:
-fontcolor=gold:
-x=(w-text_w)/2:
-y=(h/2-120):
-alpha='if(gte(t,2.0),(t-2.0)/0.6,0)':
-shadowcolor=black:
-shadowx=2:
-shadowy=2
-[name];
-
-${SHIMMER_OVERLAY}
-
+  [tmp][conf]overlay=0:0:enable='gte(t,0.5)'
 "
--map "[scene5]"
 -t 4
--r 25
+-shortest
+-preset ultrafast
+-crf 28
 -pix_fmt yuv420p
-"${OUTPUT}"
-`.replace(/\n/g, " ");
+"${OUTPUT_FILE}"
+`.replace(/\\n/g, " ");
 
-console.log("▶ Rendering luxury birthday video…");
+console.log("Running FFmpeg…");
 
-exec(cmd, (err, stdout, stderr) => {
+exec(ffmpegCmd, async (err, stdout, stderr) => {
   if (err) {
     console.error("❌ FFmpeg failed");
-    console.error(stderr);
-    return;
+    console.error(stderr); // VERY IMPORTANT
+    process.exit(1);
   }
-  console.log("✅ Render complete:", OUTPUT);
+
+  if (!fs.existsSync(OUTPUT_FILE)) {
+    console.error("Render failed: output missing");
+    process.exit(1);
+  }
+
+  console.log("✅ Render SUCCESS");
+
+  // ---------- R2 CLIENT ----------
+  const s3 = new S3Client({
+    region: "auto",
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    },
+  });
+
+  const fileBuffer = fs.readFileSync(OUTPUT_FILE);
+  const key = `renders/sparkle_${Date.now()}_${crypto.randomBytes(4).toString("hex")}.mp4`;
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET,
+      Key: key,
+      Body: fileBuffer,
+      ContentType: "video/mp4",
+    })
+  );
+
+  const publicUrl = `${process.env.R2_PUBLIC_BASE}/${key}`;
+
+  console.log("🎉 UPLOAD SUCCESS");
+  console.log("PUBLIC LINK:", publicUrl);
+
+  console.log("Worker finished job. Going idle.");
+  process.exit(0);
 });
+
+
+
