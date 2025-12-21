@@ -24,7 +24,8 @@ const EFFECTS = path.join(ROOT, "effects");
 const BG        = path.join(ASSETS, "bg.png");
 const BOX_BASE  = path.join(ASSETS, "box_base.png");
 const BOX_LID   = path.join(ASSETS, "box_lid.png");
-const FONT      = path.join(ASSETS, "fonts", "PlayfairDisplay-Bold.ttf");
+const FONT = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
+
 const CONFETTI  = path.join(EFFECTS, "confetti.mp4");
 
 const OUTPUT_DIR  = path.join(ROOT, "renders");
