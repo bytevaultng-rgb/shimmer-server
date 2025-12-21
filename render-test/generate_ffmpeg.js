@@ -49,7 +49,6 @@ const ffmpegCmd = `
 ffmpeg -y
 -loop 1 -i "${TEMPLATE}"
 -i "${SPARKLE}"
--f lavfi -i "nullsrc=s=1280x720:d=4"
 -filter_complex "
   [0:v]scale=1280:720,format=rgba[bg];
   [1:v]scale=1280:720,format=rgba[fx];
@@ -64,15 +63,7 @@ ffmpeg -y
   format=gray[mask];
 
   [fx][mask]alphamerge[textfx];
-  [bg][textfx]overlay=0:0[tmp];
-
-  [2:v]geq=
-    lum='if(lt(random(1),0.015),255,0)':
-    a='if(lt(random(2),0.015),180,0)',
-  boxblur=3:1,
-  fps=30[confetti];
-
-  [tmp][confetti]overlay=0:0
+  [bg][textfx]overlay=0:0
 "
 -t 4
 -shortest
@@ -81,6 +72,7 @@ ffmpeg -y
 -pix_fmt yuv420p
 "${OUTPUT_FILE}"
 `.replace(/\n/g, " ");
+
 
 
 console.log("Running FFmpeg…");
