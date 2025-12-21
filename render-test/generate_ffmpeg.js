@@ -74,7 +74,7 @@ noise=alls=20:allf=t+u,format=rgba[confetti];
 
 console.log("Running FFmpeg…");
 
-exec(ffmpegCmd, (err, stdout, stderr) => {
+exec(ffmpegCmd, async (err, stdout, stderr) => {
   if (err) {
     console.error("❌ FFmpeg failed");
     console.error(stderr);
