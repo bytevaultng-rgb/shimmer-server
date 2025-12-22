@@ -45,13 +45,12 @@ format=rgba[conf];
 
 color=black:s=1080x1920,
 
-# --- TITLE ---
 drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':
 fontsize=110:fontcolor=white:
 x=(w-text_w)/2:y=360:
 enable='between(t,0,6)',
 
-# --- NAME ---
+
 drawtext=fontfile=${FONT}:text='${RECEIVER}':
 fontsize=96:fontcolor=white:
 x=(w-text_w)/2:y=440:
