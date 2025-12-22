@@ -73,42 +73,36 @@ x=(w-text_w)/2:y=(h/2)-140:
 enable='between(t,6,12)',
 
 drawtext=fontfile=${FONT}:text='${MSG1}':
-fontsize=44:fontcolor=white:line_spacing=10:
+fontsize=44:fontcolor=white:
 x=(w-text_w)/2:y=(h/2)-20:
-alpha='if(between(t,12,16),(t-12)/1, if(between(t,16,27),1,0))',
+enable='between(t,12,27)',
 
 drawtext=fontfile=${FONT}:text='${MSG2}':
-fontsize=44:fontcolor=white:line_spacing=10:
+fontsize=44:fontcolor=white:
 x=(w-text_w)/2:y=(h/2)+30:
-alpha='if(between(t,16,20),(t-16)/1, if(between(t,20,27),1,0))',
+enable='between(t,16,27)',
 
 drawtext=fontfile=${FONT}:text='${MSG3}':
-fontsize=44:fontcolor=white:line_spacing=10:
+fontsize=44:fontcolor=white:
 x=(w-text_w)/2:y=(h/2)+80:
-alpha='if(between(t,20,24),(t-20)/1, if(between(t,24,27),1,0))',
+enable='between(t,20,27)',
 
 drawtext=fontfile=${FONT}:text='${MSG4}':
-fontsize=44:fontcolor=white:line_spacing=10:
+fontsize=44:fontcolor=white:
 x=(w-text_w)/2:y=(h/2)+130:
-alpha='if(between(t,24,27),(t-24)/1,1)'
+enable='between(t,24,27)'
 
 ,format=gray[mask];
 
-[mask]boxblur=30:5[blurred];
-color=#d4af37@0.45:s=1080x1920,
-geq=a='0.35+0.15*sin(2*PI*t/6)'[gold];
-[gold][blurred]alphamerge[textglow];
-
 [fx][mask]alphamerge[textfx];
 
-color=white@0.55:s=1080x1920,
-noise=alls=28:allf=t+u,
+color=white@0.45:s=1080x1920,
+noise=alls=24:allf=t+u,
 boxblur=2:1,
 format=rgba[confetti];
 
-[bg][confetti]overlay=0:0[tmp1];
-[tmp1][textglow]overlay=0:0[tmp2];
-[tmp2][textfx]overlay=0:0
+[bg][confetti]overlay=0:0[tmp];
+[tmp][textfx]overlay=0:0
 " \
 -map 0:v \
 -map 2:a \
