@@ -69,7 +69,12 @@ format=gray[mask];
 
 [bg][conf]overlay=0:0[tmp];
 [tmp][textfx]overlay=0:0,
-zoompan=z='if(lte(t,36),1,1+0.002*(t-36))':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':fps=30
+zoompan=
+z='if(lte(on,1080),1,1+0.0006*(on-1080))':
+x='iw/2-(iw/zoom/2)':
+y='ih/2-(ih/zoom/2)':
+fps=30
+
 "
 -map 0:v
 -map 3:a
