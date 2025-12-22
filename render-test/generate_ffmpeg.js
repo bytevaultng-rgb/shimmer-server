@@ -20,7 +20,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
   const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
   const FONT     = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
   const SPARKLE  = path.join(ROOT, "effects", "sparkle.mp4");
-  const CONFETTI = path.join(ROOT, "effects", "confetti_v2.mp4");
+  const CONFETTI = path.join(ROOT, "effects", "confetti.mp4");
   const MUSIC    = path.join(ROOT, "effects", "music.mp3");
 
   const OUTPUT_DIR  = path.join(ROOT, "renders");
