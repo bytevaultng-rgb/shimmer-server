@@ -37,33 +37,76 @@ ffmpeg -y
 -stream_loop -1 -i "${MUSIC}"
 -filter_complex "
 
-[0:v]scale=1080:1920,format=rgba[bg];
-[1:v]scale=1080:1920,format=rgba[spark];
-[2:v]scale=1080:1920,chromakey=0x00FF00:0.25:0.1,format=rgba[conf];
+[0:v]
+scale=1080:1920:force_original_aspect_ratio=decrease,
+pad=1080:1920:(ow-iw)/2:(oh-ih)/2,
+format=rgba[bg];
+
+[1:v]
+scale=1080:1920,
+format=rgba[spark];
+
+[2:v]
+scale=1080:1920,
+chromakey=0x00FF00:0.18:0.05,
+format=rgba[conf];
+
 
 color=black:s=1080x1920,
 
-drawtext=fontfile=${FONT}:text='${MSG1}':fontsize=36:x=(w-text_w)/2:y=580:alpha='if(lt(t,12),0,1)',
-drawtext=fontfile=${FONT}:text='${MSG2}':fontsize=36:x=(w-text_w)/2:y=630:alpha='if(lt(t,16),0,1)',
-drawtext=fontfile=${FONT}:text='${MSG3}':fontsize=36:x=(w-text_w)/2:y=680:alpha='if(lt(t,20),0,1)',
-drawtext=fontfile=${FONT}:text='${MSG4}':fontsize=36:x=(w-text_w)/2:y=730:alpha='if(lt(t,24),0,1)',
-drawtext=fontfile=${FONT}:text='${MSG5}':fontsize=36:x=(w-text_w)/2:y=780:alpha='if(lt(t,28),0,1)',
+drawtext=fontfile=${FONT}:text='${MSG1}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=580:
+alpha='gte(t,12)',
 
-drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':fontsize=110:x=(w-text_w)/2:y=(h/2)-240:alpha='if(lt(t,32),0,1)',
-drawtext=fontfile=${FONT}:text='${RECEIVER}':fontsize=96:x=(w-text_w)/2:y=(h/2)-160:alpha='if(lt(t,32),0,1)',
+drawtext=fontfile=${FONT}:text='${MSG2}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=630:
+alpha='gte(t,16)',
+
+drawtext=fontfile=${FONT}:text='${MSG3}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=680:
+alpha='gte(t,20)',
+
+drawtext=fontfile=${FONT}:text='${MSG4}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=730:
+alpha='gte(t,24)',
+
+drawtext=fontfile=${FONT}:text='${MSG5}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=780:
+alpha='gte(t,28)',
+
+drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':
+fontsize=110:fontcolor=white:
+x=(w-text_w)/2:y=(h/2)-260:
+alpha='gte(t,32)',
+
+drawtext=fontfile=${FONT}:text='${RECEIVER}':
+fontsize=96:fontcolor=white:
+x=(w-text_w)/2:y=(h/2)-170:
+alpha='gte(t,32)',
 
 format=gray[textmask];
 
+
 [spark][textmask]alphamerge[textfx];
 
-[bg][conf]overlay=0:0[tmp];
-[tmp][textfx]overlay=0:0,
-zoompan=
-z='if(lte(on,960),1,1+0.0008*(on-960))':
-x='iw/2-(iw/zoom/2)':
-y='ih/2-(ih/zoom/2)':
-fps=30
+[bg][conf]overlay=0:0[tmp1];
+[tmp1][textfx]overlay=0:0[tmp2];
+
+
+[tmp2]
+scale=
+w='if(gte(t,36),iw*(1-(t-36)/4),iw)':
+h='if(gte(t,36),ih*(1-(t-36)/4),ih)',
+pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,
+format=yuv420p
 "
+
+
 -map 0:v
 -map 3:a
 -t 40
