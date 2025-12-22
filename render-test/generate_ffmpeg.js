@@ -1,5 +1,5 @@
 /**
- * FFmpeg Worker – Sparkle Mask + Gold Pulse Glow + Confetti + Music (Portrait)
+ * FFmpeg Worker – Luxury Sparkle Mask + Rich Gold Glow + Confetti + Music (Portrait)
  */
 
 const { exec } = require("child_process");
@@ -20,6 +20,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
   const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
   const FONT     = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
   const SPARKLE  = path.join(ROOT, "effects", "sparkle.mp4");
+  const CONFETTI = path.join(ROOT, "effects", "confetti.mp4");
   const MUSIC    = path.join(ROOT, "effects", "music.mp3");
 
   const OUTPUT_DIR  = path.join(ROOT, "renders");
@@ -27,18 +28,17 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
   const RECEIVER = "IFEOMA";
 
-  // Messages are manually wrapped (this is the correct FFmpeg way)
-  const MSG1 = "Your vision lights\nthe way for many.";
-  const MSG2 = "You lead with purpose,\nstrength, and heart.";
-  const MSG3 = "Thank you for inspiring\nexcellence through action.";
-  const MSG4 = "May this new year bring joy,\ngrowth, and victories.";
+  const MSG1 = "Your vision lights the way for many.";
+  const MSG2 = "You lead with purpose, strength, and heart.";
+  const MSG3 = "Thank you for inspiring excellence through action.";
+  const MSG4 = "May this new year bring joy, growth, and victories.";
   const MSG5 = "Wishing you fulfillment, impact, and continued greatness.";
 
   if (!fs.existsSync(OUTPUT_DIR)) {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   }
 
-  for (const f of [TEMPLATE, FONT, SPARKLE, MUSIC]) {
+  for (const f of [TEMPLATE, FONT, SPARKLE, CONFETTI, MUSIC]) {
     if (!fs.existsSync(f)) {
       console.error("Missing file:", f);
       process.exit(1);
@@ -49,12 +49,13 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 ffmpeg -y \
 -loop 1 -i "${TEMPLATE}" \
 -stream_loop -1 -i "${SPARKLE}" \
+-i "${CONFETTI}" \
 -stream_loop -1 -i "${MUSIC}" \
 -filter_complex "
 [0:v]
 scale=1080:1920:force_original_aspect_ratio=decrease,
 pad=1080:1920:(ow-iw)/2:(oh-ih)/2,
-format=rgba[template];
+format=rgba[bg];
 
 [1:v]
 scale=1080:1920:force_original_aspect_ratio=decrease,
@@ -62,54 +63,38 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,
 format=rgba[fx];
 
 color=black:s=1080x1920,
+drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':fontsize=110:fontcolor=white:x=(w-text_w)/2:y=360:enable='between(t,0,6)',
+drawtext=fontfile=${FONT}:text='${RECEIVER}':fontsize=96:fontcolor=white:x=(w-text_w)/2:y=440:enable='between(t,6,12)',
 
-drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':
-fontsize=110:fontcolor=white:
-x=(w-text_w)/2:y=360:
-enable='between(t,0,6)',
-
-drawtext=fontfile=${FONT}:text='${RECEIVER}':
-fontsize=96:fontcolor=white:
-x=(w-text_w)/2:y=440:
-enable='between(t,6,12)',
-
-drawtext=fontfile=${FONT}:text='${MSG1}':
-fontsize=38:fontcolor=white:
-x=(w-text_w)/2:y=560:
-enable='between(t,12,40)',
-
-drawtext=fontfile=${FONT}:text='${MSG2}':
-fontsize=38:fontcolor=white:
-x=(w-text_w)/2:y=610:
-enable='between(t,16,40)',
-
-drawtext=fontfile=${FONT}:text='${MSG3}':
-fontsize=38:fontcolor=white:
-x=(w-text_w)/2:y=660:
-enable='between(t,20,40)',
-
-drawtext=fontfile=${FONT}:text='${MSG4}':
-fontsize=38:fontcolor=white:
-x=(w-text_w)/2:y=710:
-enable='between(t,24,40)',
-
-drawtext=fontfile=${FONT}:text='${MSG5}':
-fontsize=38:fontcolor=white:
-x=(w-text_w)/2:y=760:
-enable='between(t,28,40)',
-
+drawtext=fontfile=${FONT}:text='${MSG1}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=580:enable='between(t,12,40)',
+drawtext=fontfile=${FONT}:text='${MSG2}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=630:enable='between(t,16,40)',
+drawtext=fontfile=${FONT}:text='${MSG3}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=680:enable='between(t,20,40)',
+drawtext=fontfile=${FONT}:text='${MSG4}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=730:enable='between(t,24,40)',
+drawtext=fontfile=${FONT}:text='${MSG5}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=780:enable='between(t,28,40)',
 format=gray[mask];
 
-[fx][mask]alphamerge[textfx];
+[fx][mask]alphamerge[sparkle_base];
 
-[template][textfx]overlay=0:0[composite];
+[sparkle_base]
+eq=contrast=1.35:saturation=1.6,
+boxblur=2:1[sparkle_soft];
 
-[composite]
-zoompan=z='if(lte(on,90),1,1.04)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':fps=30
+[sparkle_soft][sparkle_base]
+blend=all_mode=screen:all_opacity=0.9[textfx];
+
+[2:v]
+chromakey=0x00FF00:0.25:0.15,
+scale=1080:1920,
+format=rgba[conf];
+
+[bg][conf]overlay=0:0[tmp1];
+[tmp1][textfx]overlay=0:0[tmp2];
+
+[tmp2]
+zoompan=z='if(lte(t,36),1,1+0.002*(t-36))':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':fps=30
 " \
 -map 0:v \
--map 2:a \
--shortest \
+-map 3:a \
 -t 40 \
 -r 30 \
 -preset ultrafast \
