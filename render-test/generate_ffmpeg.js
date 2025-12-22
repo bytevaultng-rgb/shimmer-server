@@ -72,7 +72,6 @@ fontsize=110:fontcolor=white:
 x=(w-text_w)/2:y=(h/2)-140:
 enable='between(t,6,12)',
 
-# ===== STATIC MESSAGE BLOCK (NO MOVEMENT) =====
 drawtext=fontfile=${FONT}:text='${MSG1}':
 fontsize=44:fontcolor=white:line_spacing=10:
 x=(w-text_w)/2:y=(h/2)-20:
@@ -91,9 +90,9 @@ alpha='if(between(t,20,24),(t-20)/1, if(between(t,24,27),1,0))',
 drawtext=fontfile=${FONT}:text='${MSG4}':
 fontsize=44:fontcolor=white:line_spacing=10:
 x=(w-text_w)/2:y=(h/2)+130:
-alpha='if(between(t,24,27),(t-24)/1,1)',
+alpha='if(between(t,24,27),(t-24)/1,1)'
 
-format=gray[mask];
+,format=gray[mask];
 
 [mask]boxblur=30:5[blurred];
 color=#d4af37@0.45:s=1080x1920,
@@ -102,12 +101,10 @@ geq=a='0.35+0.15*sin(2*PI*t/6)'[gold];
 
 [fx][mask]alphamerge[textfx];
 
-# ===== VISIBLE LUXURY CONFETTI =====
 color=white@0.55:s=1080x1920,
 noise=alls=28:allf=t+u,
 boxblur=2:1,
 format=rgba[confetti];
-
 
 [bg][confetti]overlay=0:0[tmp1];
 [tmp1][textglow]overlay=0:0[tmp2];
