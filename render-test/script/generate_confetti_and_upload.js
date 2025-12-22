@@ -11,7 +11,7 @@ const {
   R2_ACCESS_KEY_ID,
   R2_SECRET_ACCESS_KEY,
   R2_BUCKET,
-  R2_PUBLIC_URL
+  R2_PUBLIC_BASE
 } = process.env;
 
 if (!R2_ACCOUNT_ID) {
@@ -76,7 +76,7 @@ exec(ffmpegCmd, async (err, stdout, stderr) => {
     })
   );
 
-  const publicUrl = `${R2_PUBLIC_URL}/${R2_KEY}`;
+  const publicUrl = `${R2_PUBLIC_BASE}/${R2_KEY}`;
 
   console.log("✅ Upload complete");
   console.log("🔗 PUBLIC LINK:");
