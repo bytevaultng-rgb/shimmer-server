@@ -33,6 +33,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
   const MSG3 = "Thank you for inspiring excellence through action.";
   const MSG4 = "May this new year bring joy, growth, and victories.";
   const MSG5 = "Wishing you fulfillment, impact, and greatness.";
+  const MSG6 = "May your impact continue to shape generations.";
 
   if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
@@ -56,33 +57,32 @@ format=rgba[conf];
 color=black:s=1080x1920,
 
 drawtext=fontfile=${FONT}:text='${MSG1}':
-fontsize=36:fontcolor=white:x=(w-text_w)/2:y=580:
-enable='gte(t,6)',
+fontsize=36:x=(w-text_w)/2:y=520:enable='gte(t,36)',
 
 drawtext=fontfile=${FONT}:text='${MSG2}':
-fontsize=36:fontcolor=white:x=(w-text_w)/2:y=630:
-enable='gte(t,10)',
+fontsize=36:x=(w-text_w)/2:y=570:enable='gte(t,36)',
 
 drawtext=fontfile=${FONT}:text='${MSG3}':
-fontsize=36:fontcolor=white:x=(w-text_w)/2:y=680:
-enable='gte(t,14)',
+fontsize=36:x=(w-text_w)/2:y=620:enable='gte(t,36)',
 
 drawtext=fontfile=${FONT}:text='${MSG4}':
-fontsize=36:fontcolor=white:x=(w-text_w)/2:y=730:
-enable='gte(t,18)',
+fontsize=36:x=(w-text_w)/2:y=670:enable='gte(t,36)',
 
 drawtext=fontfile=${FONT}:text='${MSG5}':
-fontsize=36:fontcolor=white:x=(w-text_w)/2:y=780:
-enable='gte(t,22)',
+fontsize=36:x=(w-text_w)/2:y=720:enable='gte(t,36)',
+
+drawtext=fontfile=${FONT}:text='${MSG6}':
+fontsize=36:x=(w-text_w)/2:y=770:enable='gte(t,36)',
+
 
 drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':
-fontsize=110:fontcolor=white:
-x=(w-text_w)/2:y=320:
+fontsize=108:fontcolor=white:
+x=(w-text_w)/2:y=300:
 enable='gte(t,26)',
 
 drawtext=fontfile=${FONT}:text='${RECEIVER}':
-fontsize=96:fontcolor=white:
-x=(w-text_w)/2:y=400:
+fontsize=94:fontcolor=white:
+x=(w-text_w)/2:y=390:
 enable='gte(t,26)',
 
 format=gray[textmask];
@@ -92,11 +92,11 @@ format=gray[textmask];
 [bg][conf]overlay=0:0[tmp1];
 [tmp1][textfx]overlay=0:0[tmp2];
 
-[tmp2]fade=t=out:st=36:d=4
+[tmp2]fade=t=out:st=44:d=3
 " \
 -map 0:v \
 -map 3:a \
--t 40 \
+-t 48 \
 -r 30 \
 -preset ultrafast \
 -crf 28 \
@@ -107,41 +107,37 @@ format=gray[textmask];
   console.log("▶ Rendering FINAL birthday video…");
 
   exec(ffmpegCmd, async (err, stdout, stderr) => {
-  if (stdout) console.log(stdout);
-  if (stderr) console.log(stderr);
+    if (err) {
+      console.error("❌ FFmpeg failed");
+      console.error(stderr);
+      process.exit(1);
+    }
 
-  if (err) {
-    console.error("❌ FFmpeg failed");
-    process.exit(1);
-  }
+    console.log("✅ Render SUCCESS:", OUTPUT_FILE);
 
-  console.log("✅ Render SUCCESS:", OUTPUT_FILE);
+    const s3 = new S3Client({
+      region: "auto",
+      endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId: process.env.R2_ACCESS_KEY_ID,
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+      },
+    });
 
-  const s3 = new S3Client({
-    region: "auto",
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-    },
+    const buffer = fs.readFileSync(OUTPUT_FILE);
+    const key = `renders/birthday_${Date.now()}_${crypto.randomBytes(4).toString("hex")}.mp4`;
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: process.env.R2_BUCKET,
+        Key: key,
+        Body: buffer,
+        ContentType: "video/mp4",
+      })
+    );
+
+    console.log("🎉 UPLOAD SUCCESS");
+    console.log("PUBLIC LINK:", `${process.env.R2_PUBLIC_BASE}/${key}`);
+    process.exit(0);
   });
-
-  const buffer = fs.readFileSync(OUTPUT_FILE);
-  const key = `renders/birthday_${Date.now()}_${crypto
-    .randomBytes(4)
-    .toString("hex")}.mp4`;
-
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: process.env.R2_BUCKET,
-      Key: key,
-      Body: buffer,
-      ContentType: "video/mp4",
-    })
-  );
-
-  console.log("🎉 UPLOAD SUCCESS");
-  console.log("PUBLIC LINK:", `${process.env.R2_PUBLIC_BASE}/${key}`);
-
-  setTimeout(() => process.exit(0), 2000);
-});
+})();
