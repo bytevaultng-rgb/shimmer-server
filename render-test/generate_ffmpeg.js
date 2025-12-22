@@ -38,7 +38,10 @@ ffmpeg -y
 -filter_complex "
 [0:v]scale=1080:1920,format=rgba[bg];
 [1:v]scale=1080:1920,format=rgba[fx];
-[2:v]scale=1080:1920,format=rgba[conf];
+[2:v]
+scale=1080:1920,
+chromakey=0x00FF00:0.25:0.1,
+format=rgba[conf];
 
 color=black:s=1080x1920,
 drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':fontsize=110:x=(w-text_w)/2:y=360:enable='between(t,0,6)',
