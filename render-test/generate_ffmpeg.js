@@ -13,6 +13,8 @@ const FONT     = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
 const SPARKLE  = path.join(ROOT, "effects", "sparkle.mp4");
 const CONFETTI = path.join(ROOT, "effects", "confetti_v2.mp4");
 const MUSIC    = path.join(ROOT, "effects", "music.mp3");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const crypto = require("crypto");
 
 const OUTPUT_DIR  = path.join(ROOT, "renders");
 const OUTPUT_FILE = path.join(OUTPUT_DIR, "birthday_final.mp4");
@@ -64,11 +66,43 @@ format=gray[mask];
 
 console.log("▶ Rendering FINAL birthday video…");
 
-exec(ffmpegCmd, (err, stdout, stderr) => {
+exec(ffmpegCmd, async (err, stdout, stderr) => {
   if (err) {
     console.error("❌ FFmpeg failed");
     console.error(stderr);
     process.exit(1);
   }
-  console.log("✅ DONE:", OUTPUT_FILE);
+
+  console.log("✅ Render SUCCESS");
+
+  // ---------- R2 UPLOAD ----------
+  const s3 = new S3Client({
+    region: "auto",
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    },
+  });
+
+  const buffer = fs.readFileSync(OUTPUT_FILE);
+  const key = `renders/birthday_${Date.now()}_${crypto
+    .randomBytes(4)
+    .toString("hex")}.mp4`;
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: "video/mp4",
+    })
+  );
+
+  const link = `${process.env.R2_PUBLIC_BASE}/${key}`;
+
+  console.log("🎉 UPLOAD SUCCESS");
+  console.log("PUBLIC LINK:", link);
+
+  process.exit(0);
 });
