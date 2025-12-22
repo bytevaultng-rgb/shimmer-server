@@ -1,5 +1,5 @@
 /**
- * FFmpeg Worker – Luxury Sparkle Mask + Rich Gold Glow + Confetti + Music (Portrait)
+ * FFmpeg Worker – Sparkle Mask + Gold Pulse Glow + Confetti + Music (Portrait)
  */
 
 const { exec } = require("child_process");
@@ -11,7 +11,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 (async () => {
   if (!process.env.RUN_RENDER) {
     console.log("RUN_RENDER not set. Worker idle.");
-    setInterval(() => {}, 60_000);
+    setInterval(() => {}, 60000);
     return;
   }
 
@@ -34,9 +34,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
   const MSG4 = "May this new year bring joy, growth, and victories.";
   const MSG5 = "Wishing you fulfillment, impact, and continued greatness.";
 
-  if (!fs.existsSync(OUTPUT_DIR)) {
-    fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-  }
+  if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
   for (const f of [TEMPLATE, FONT, SPARKLE, CONFETTI, MUSIC]) {
     if (!fs.existsSync(f)) {
@@ -46,26 +44,18 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
   }
 
   const ffmpegCmd = `
-ffmpeg -y \
--loop 1 -i "${TEMPLATE}" \
--stream_loop -1 -i "${SPARKLE}" \
--i "${CONFETTI}" \
--stream_loop -1 -i "${MUSIC}" \
+ffmpeg -y
+-loop 1 -i "${TEMPLATE}"
+-stream_loop -1 -i "${SPARKLE}"
+-i "${CONFETTI}"
+-stream_loop -1 -i "${MUSIC}"
 -filter_complex "
-[0:v]
-scale=1080:1920:force_original_aspect_ratio=decrease,
-pad=1080:1920:(ow-iw)/2:(oh-ih)/2,
-format=rgba[bg];
-
-[1:v]
-scale=1080:1920:force_original_aspect_ratio=decrease,
-pad=1080:1920:(ow-iw)/2:(oh-ih)/2,
-format=rgba[fx];
+[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,format=rgba[bg];
+[1:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,format=rgba[fx];
 
 color=black:s=1080x1920,
 drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':fontsize=110:fontcolor=white:x=(w-text_w)/2:y=360:enable='between(t,0,6)',
 drawtext=fontfile=${FONT}:text='${RECEIVER}':fontsize=96:fontcolor=white:x=(w-text_w)/2:y=440:enable='between(t,6,12)',
-
 drawtext=fontfile=${FONT}:text='${MSG1}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=580:enable='between(t,12,40)',
 drawtext=fontfile=${FONT}:text='${MSG2}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=630:enable='between(t,16,40)',
 drawtext=fontfile=${FONT}:text='${MSG3}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=680:enable='between(t,20,40)',
@@ -73,41 +63,30 @@ drawtext=fontfile=${FONT}:text='${MSG4}':fontsize=36:fontcolor=white:x=(w-text_w
 drawtext=fontfile=${FONT}:text='${MSG5}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=780:enable='between(t,28,40)',
 format=gray[mask];
 
-[fx][mask]alphamerge[sparkle_base];
+[fx][mask]alphamerge[textfx];
 
-[sparkle_base]
-eq=contrast=1.35:saturation=1.6,
-boxblur=2:1[sparkle_soft];
+[2:v]scale=1080:1920,format=rgba[conf];
 
-[sparkle_soft][sparkle_base]
-blend=all_mode=screen:all_opacity=0.9[textfx];
-
-[2:v]
-chromakey=0x00FF00:0.25:0.15,
-scale=1080:1920,
-format=rgba[conf];
-
-[bg][conf]overlay=0:0[tmp1];
-[tmp1][textfx]overlay=0:0[tmp2];
-
-[tmp2]
+[bg][conf]overlay=0:0[tmp];
+[tmp][textfx]overlay=0:0,
 zoompan=z='if(lte(t,36),1,1+0.002*(t-36))':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':fps=30
-" \
--map 0:v \
--map 3:a \
--t 40 \
--r 30 \
--preset ultrafast \
--crf 28 \
--pix_fmt yuv420p \
+"
+-map 0:v
+-map 3:a
+-t 40
+-r 30
+-preset ultrafast
+-crf 28
+-pix_fmt yuv420p
 "${OUTPUT_FILE}"
 `.replace(/\n/g, " ");
 
   console.log("Running FFmpeg…");
 
-  exec(ffmpegCmd, async (err) => {
+  exec(ffmpegCmd, async (err, stdout, stderr) => {
     if (err) {
       console.error("❌ FFmpeg failed");
+      console.error(stderr);
       process.exit(1);
     }
 
