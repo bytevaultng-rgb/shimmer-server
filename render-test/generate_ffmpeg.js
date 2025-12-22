@@ -107,37 +107,41 @@ format=gray[textmask];
   console.log("▶ Rendering FINAL birthday video…");
 
   exec(ffmpegCmd, async (err, stdout, stderr) => {
-    if (err) {
-      console.error("❌ FFmpeg failed");
-      console.error(stderr);
-      process.exit(1);
-    }
+  if (stdout) console.log(stdout);
+  if (stderr) console.log(stderr);
 
-    console.log("✅ Render SUCCESS:", OUTPUT_FILE);
+  if (err) {
+    console.error("❌ FFmpeg failed");
+    process.exit(1);
+  }
 
-    const s3 = new S3Client({
-      region: "auto",
-      endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      credentials: {
-        accessKeyId: process.env.R2_ACCESS_KEY_ID,
-        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-      },
-    });
+  console.log("✅ Render SUCCESS:", OUTPUT_FILE);
 
-    const buffer = fs.readFileSync(OUTPUT_FILE);
-    const key = `renders/birthday_${Date.now()}_${crypto.randomBytes(4).toString("hex")}.mp4`;
-
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET,
-        Key: key,
-        Body: buffer,
-        ContentType: "video/mp4",
-      })
-    );
-
-    console.log("🎉 UPLOAD SUCCESS");
-    console.log("PUBLIC LINK:", `${process.env.R2_PUBLIC_BASE}/${key}`);
-    process.exit(0);
+  const s3 = new S3Client({
+    region: "auto",
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    },
   });
-})();
+
+  const buffer = fs.readFileSync(OUTPUT_FILE);
+  const key = `renders/birthday_${Date.now()}_${crypto
+    .randomBytes(4)
+    .toString("hex")}.mp4`;
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: "video/mp4",
+    })
+  );
+
+  console.log("🎉 UPLOAD SUCCESS");
+  console.log("PUBLIC LINK:", `${process.env.R2_PUBLIC_BASE}/${key}`);
+
+  setTimeout(() => process.exit(0), 2000);
+});
