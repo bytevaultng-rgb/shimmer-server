@@ -32,6 +32,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
   const MSG2 = "You lead with purpose,\nstrength, and heart.";
   const MSG3 = "Thank you for inspiring\nexcellence through action.";
   const MSG4 = "May this new year bring joy,\ngrowth, and victories.";
+  const MSG5 = "Wishing you fulfillment, impact, and continued greatness.";
 
   if (!fs.existsSync(OUTPUT_DIR)) {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -53,7 +54,7 @@ ffmpeg -y \
 [0:v]
 scale=1080:1920:force_original_aspect_ratio=decrease,
 pad=1080:1920:(ow-iw)/2:(oh-ih)/2,
-format=rgba[bg];
+format=rgba[template];
 
 [1:v]
 scale=1080:1920:force_original_aspect_ratio=decrease,
@@ -63,51 +64,53 @@ format=rgba[fx];
 color=black:s=1080x1920,
 
 drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':
-fontsize=120:fontcolor=white:
-x=(w-text_w)/2:y=(h/2)-220:
+fontsize=110:fontcolor=white:
+x=(w-text_w)/2:y=360:
 enable='between(t,0,6)',
 
 drawtext=fontfile=${FONT}:text='${RECEIVER}':
-fontsize=110:fontcolor=white:
-x=(w-text_w)/2:y=(h/2)-140:
+fontsize=96:fontcolor=white:
+x=(w-text_w)/2:y=440:
 enable='between(t,6,12)',
 
 drawtext=fontfile=${FONT}:text='${MSG1}':
-fontsize=44:fontcolor=white:
-x=(w-text_w)/2:y=(h/2)-20:
-enable='between(t,12,27)',
+fontsize=38:fontcolor=white:
+x=(w-text_w)/2:y=560:
+enable='between(t,12,40)',
 
 drawtext=fontfile=${FONT}:text='${MSG2}':
-fontsize=44:fontcolor=white:
-x=(w-text_w)/2:y=(h/2)+30:
-enable='between(t,16,27)',
+fontsize=38:fontcolor=white:
+x=(w-text_w)/2:y=610:
+enable='between(t,16,40)',
 
 drawtext=fontfile=${FONT}:text='${MSG3}':
-fontsize=44:fontcolor=white:
-x=(w-text_w)/2:y=(h/2)+80:
-enable='between(t,20,27)',
+fontsize=38:fontcolor=white:
+x=(w-text_w)/2:y=660:
+enable='between(t,20,40)',
 
 drawtext=fontfile=${FONT}:text='${MSG4}':
-fontsize=44:fontcolor=white:
-x=(w-text_w)/2:y=(h/2)+130:
-enable='between(t,24,27)'
+fontsize=38:fontcolor=white:
+x=(w-text_w)/2:y=710:
+enable='between(t,24,40)',
 
-,format=gray[mask];
+drawtext=fontfile=${FONT}:text='${MSG5}':
+fontsize=38:fontcolor=white:
+x=(w-text_w)/2:y=760:
+enable='between(t,28,40)',
+
+format=gray[mask];
 
 [fx][mask]alphamerge[textfx];
 
-color=white@0.45:s=1080x1920,
-noise=alls=24:allf=t+u,
-boxblur=2:1,
-format=rgba[confetti];
+[template][textfx]overlay=0:0[composite];
 
-[bg][confetti]overlay=0:0[tmp];
-[tmp][textfx]overlay=0:0
+[composite]
+zoompan=z='if(lte(on,90),1,1.04)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':fps=30
 " \
 -map 0:v \
 -map 2:a \
 -shortest \
--t 30 \
+-t 40 \
 -r 30 \
 -preset ultrafast \
 -crf 28 \
