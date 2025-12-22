@@ -5,6 +5,8 @@
 const { exec } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
 const ROOT = __dirname;
 
@@ -13,8 +15,6 @@ const FONT     = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
 const SPARKLE  = path.join(ROOT, "effects", "sparkle.mp4");
 const CONFETTI = path.join(ROOT, "effects", "confetti_v2.mp4");
 const MUSIC    = path.join(ROOT, "effects", "music.mp3");
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-const crypto = require("crypto");
 
 const OUTPUT_DIR  = path.join(ROOT, "renders");
 const OUTPUT_FILE = path.join(OUTPUT_DIR, "birthday_final.mp4");
@@ -32,100 +32,33 @@ if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 const ffmpegCmd = `
 ffmpeg -y
 -loop 1 -i "${TEMPLATE}"
--i "${SPARKLE}"
+-stream_loop -1 -i "${SPARKLE}"
 -i "${CONFETTI}"
 -stream_loop -1 -i "${MUSIC}"
 -filter_complex "
+
 [0:v]scale=1080:1920,format=rgba[bg];
-[1:v]scale=1080:1920,format=rgba[fx];
-[2:v]
-scale=1080:1920,
-chromakey=0x00FF00:0.25:0.1,
-format=rgba[conf];
+[1:v]scale=1080:1920,format=rgba[spark];
+[2:v]scale=1080:1920,chromakey=0x00FF00:0.25:0.1,format=rgba[conf];
 
 color=black:s=1080x1920,
 
+drawtext=fontfile=${FONT}:text='${MSG1}':fontsize=36:x=(w-text_w)/2:y=580:alpha='if(lt(t,12),0,1)',
+drawtext=fontfile=${FONT}:text='${MSG2}':fontsize=36:x=(w-text_w)/2:y=630:alpha='if(lt(t,16),0,1)',
+drawtext=fontfile=${FONT}:text='${MSG3}':fontsize=36:x=(w-text_w)/2:y=680:alpha='if(lt(t,20),0,1)',
+drawtext=fontfile=${FONT}:text='${MSG4}':fontsize=36:x=(w-text_w)/2:y=730:alpha='if(lt(t,24),0,1)',
+drawtext=fontfile=${FONT}:text='${MSG5}':fontsize=36:x=(w-text_w)/2:y=780:alpha='if(lt(t,28),0,1)',
 
-drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':
-fontsize=110:fontcolor=white:
-x=(w-text_w)/2:y=360:
-enable='between(t,0,6)',
+drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':fontsize=110:x=(w-text_w)/2:y=(h/2)-240:alpha='if(lt(t,32),0,1)',
+drawtext=fontfile=${FONT}:text='${RECEIVER}':fontsize=96:x=(w-text_w)/2:y=(h/2)-160:alpha='if(lt(t,32),0,1)',
 
+format=gray[textmask];
 
+[spark][textmask]alphamerge[textfx];
 
-drawtext=fontfile=${FONT}:text='${RECEIVER}':
-fontsize=96:fontcolor=white:
-x=(w-text_w)/2:y=440:
-enable='between(t,6,12)',
-
-
-drawtext=fontfile=${FONT}:text='${MSG1}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=580:
-enable='between(t,12,16)',
-
-drawtext=fontfile=${FONT}:text='${MSG2}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=630:
-enable='between(t,16,20)',
-
-drawtext=fontfile=${FONT}:text='${MSG3}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=680:
-enable='between(t,20,24)',
-
-drawtext=fontfile=${FONT}:text='${MSG4}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=730:
-enable='between(t,24,28)',
-
-drawtext=fontfile=${FONT}:text='${MSG5}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=780:
-enable='between(t,28,32)',
-
-
-drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':
-fontsize=100:fontcolor=white:
-x=(w-text_w)/2:y=320:
-enable='gte(t,32)',
-
-drawtext=fontfile=${FONT}:text='${RECEIVER}':
-fontsize=88:fontcolor=white:
-x=(w-text_w)/2:y=390:
-enable='gte(t,32)',
-
-drawtext=fontfile=${FONT}:text='${MSG1}':
-fontsize=34:fontcolor=white:
-x=(w-text_w)/2:y=520:
-enable='gte(t,32)',
-
-drawtext=fontfile=${FONT}:text='${MSG2}':
-fontsize=34:fontcolor=white:
-x=(w-text_w)/2:y=565:
-enable='gte(t,32)',
-
-drawtext=fontfile=${FONT}:text='${MSG3}':
-fontsize=34:fontcolor=white:
-x=(w-text_w)/2:y=610:
-enable='gte(t,32)',
-
-drawtext=fontfile=${FONT}:text='${MSG4}':
-fontsize=34:fontcolor=white:
-x=(w-text_w)/2:y=655:
-enable='gte(t,32)',
-
-drawtext=fontfile=${FONT}:text='${MSG5}':
-fontsize=34:fontcolor=white:
-x=(w-text_w)/2:y=700:
-enable='gte(t,32)',
-
-format=gray[mask];
-
-
-[fx][mask]alphamerge[textfx];
 [bg][conf]overlay=0:0[tmp];
-[tmp][textfx]overlay=0:0
+[tmp][textfx]overlay=0:0,
+zoompan=z='if(lte(t,32),1,1+0.001*(t-32))':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':fps=30
 "
 -map 0:v
 -map 3:a
@@ -148,7 +81,6 @@ exec(ffmpegCmd, async (err, stdout, stderr) => {
 
   console.log("✅ Render SUCCESS");
 
-  // ---------- R2 UPLOAD ----------
   const s3 = new S3Client({
     region: "auto",
     endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -159,9 +91,7 @@ exec(ffmpegCmd, async (err, stdout, stderr) => {
   });
 
   const buffer = fs.readFileSync(OUTPUT_FILE);
-  const key = `renders/birthday_${Date.now()}_${crypto
-    .randomBytes(4)
-    .toString("hex")}.mp4`;
+  const key = `renders/birthday_${Date.now()}_${crypto.randomBytes(4).toString("hex")}.mp4`;
 
   await s3.send(
     new PutObjectCommand({
@@ -172,10 +102,7 @@ exec(ffmpegCmd, async (err, stdout, stderr) => {
     })
   );
 
-  const link = `${process.env.R2_PUBLIC_BASE}/${key}`;
-
   console.log("🎉 UPLOAD SUCCESS");
-  console.log("PUBLIC LINK:", link);
-
+  console.log("PUBLIC LINK:", `${process.env.R2_PUBLIC_BASE}/${key}`);
   process.exit(0);
 });
