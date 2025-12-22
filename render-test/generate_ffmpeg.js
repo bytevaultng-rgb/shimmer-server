@@ -55,24 +55,35 @@ chromakey=0x00FF00:0.2:0.1,
 format=rgba[conf];
 
 color=black:s=1080x1920,
-
 drawtext=fontfile=${FONT}:text='${MSG1}':
-fontsize=36:x=(w-text_w)/2:y=520:enable='gte(t,36)',
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=640:
+enable='gte(t,12)',
 
 drawtext=fontfile=${FONT}:text='${MSG2}':
-fontsize=36:x=(w-text_w)/2:y=570:enable='gte(t,36)',
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=690:
+enable='gte(t,16)',
 
 drawtext=fontfile=${FONT}:text='${MSG3}':
-fontsize=36:x=(w-text_w)/2:y=620:enable='gte(t,36)',
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=740:
+enable='gte(t,20)',
 
 drawtext=fontfile=${FONT}:text='${MSG4}':
-fontsize=36:x=(w-text_w)/2:y=670:enable='gte(t,36)',
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=790:
+enable='gte(t,24)',
 
 drawtext=fontfile=${FONT}:text='${MSG5}':
-fontsize=36:x=(w-text_w)/2:y=720:enable='gte(t,36)',
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=840:
+enable='gte(t,28)',
 
 drawtext=fontfile=${FONT}:text='${MSG6}':
-fontsize=36:x=(w-text_w)/2:y=770:enable='gte(t,36)',
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=890:
+enable='gte(t,32)',
 
 
 drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':
