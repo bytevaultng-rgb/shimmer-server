@@ -118,10 +118,12 @@ format=gray[textmask];
   console.log("▶ Rendering FINAL birthday video…");
 
   exec(ffmpegCmd, async (err, stdout, stderr) => {
-    if (err) {
-      console.error("❌ FFmpeg failed");
-      console.error(stderr);
-      process.exit(1);
+  if (stdout) console.log(stdout);
+  if (stderr) console.log(stderr);
+
+  if (err) {
+    console.error("❌ FFmpeg failed");
+    process.exit(1);
     }
 
     console.log("✅ Render SUCCESS:", OUTPUT_FILE);
