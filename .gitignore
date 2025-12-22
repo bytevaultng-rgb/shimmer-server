@@ -14,7 +14,10 @@ sparkleText*.js
 ffmpeg-check.js
 install
 
-templates/* allow glow.mp4
+templates/*
+!templates/glow.mp4
+!templates/confetti_v2.mp4
+
 node_modules/
 .env
 .env.*
