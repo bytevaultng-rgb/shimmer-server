@@ -102,14 +102,14 @@ format=gray[textmask];
 [bg][conf]overlay=0:0[tmp1];
 [tmp1][textfx]overlay=0:0[tmp2];
 
-
 [tmp2]
-scale=
-w='if(gte(t,36),iw*(1-(t-36)/4),iw)':
-h='if(gte(t,36),ih*(1-(t-36)/4),ih)',
-pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,
+crop=
+w='if(gte(t,36), iw*(1-(t-36)/4), iw)':
+h='if(gte(t,36), ih*(1-(t-36)/4), ih)':
+x='(in_w-out_w)/2':
+y='(in_h-out_h)/2',
 format=yuv420p
-"
+
 
 
 -map 0:v
