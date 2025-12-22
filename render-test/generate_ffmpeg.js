@@ -40,15 +40,20 @@ ffmpeg -y
 [0:v]
 scale=1080:1920:force_original_aspect_ratio=decrease,
 pad=1080:1920:(ow-iw)/2:(oh-ih)/2,
+setsar=1,
 format=rgba[bg];
 
 [1:v]
-scale=1080:1920,
+scale=1080:1920:force_original_aspect_ratio=decrease,
+pad=1080:1920:(ow-iw)/2:(oh-ih)/2,
+setsar=1,
 format=rgba[spark];
 
 [2:v]
-scale=1080:1920,
+scale=1080:1920:force_original_aspect_ratio=decrease,
+pad=1080:1920:(ow-iw)/2:(oh-ih)/2,
 chromakey=0x00FF00:0.18:0.05,
+setsar=1,
 format=rgba[conf];
 
 
