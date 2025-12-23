@@ -17,15 +17,21 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
   const ROOT = __dirname;
 
-  const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
-  const FONT     = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
-  const SPARKLE  = path.join(ROOT, "effects", "sparkle.mp4");
-  const MUSIC    = path.join(ROOT, "effects", "music.mp3");
-  const FONT_SCRIPT = path.join(ROOT, "fonts", "PlayfairDisplay-ExtraBoldItalic.ttf");
-  const OUTPUT_DIR  = path.join(ROOT, "renders");
-  const OUTPUT_FILE = path.join(OUTPUT_DIR, "birthday_final.mp4");
+const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
+const FONT     = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
+const SPARKLE  = path.join(ROOT, "effects", "sparkle.mp4");
+const MUSIC    = path.join(ROOT, "effects", "music.mp3");
+const FONT_SCRIPT = path.join(ROOT, "fonts", "PlayfairDisplay-ExtraBoldItalic.ttf");
 
-  if (global.__RENDER_ALREADY_RAN__) {
+
+const OUTPUT_DIR = "/var/data/renders";
+const OUTPUT_FILE = `${OUTPUT_DIR}/birthday_final.mp4`;
+
+if (!fs.existsSync(OUTPUT_DIR)) {
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+}
+
+if (global.__RENDER_ALREADY_RAN__) {
   console.log("⚠️ Render already executed, skipping.");
   process.exit(0);
 }
