@@ -54,22 +54,23 @@ format=rgba[fx];
 
 color=black:s=1080x1920,
 
-drawtext=fontfile=${FONT_SCRIPT}:
+drawtext=fontfile=${ROOT}/fonts/GreatVibes-Regular.ttf:
 text='HAPPY BIRTHDAY':
-fontsize='110 + 10*min(1,(t-26))':
+fontsize=100:
 fontcolor=white:
 x=(w-text_w)/2:
-y=(h/2)-260:
-enable='gte(t,26)'
+y=260:
+enable='gte(t,18)',
 
 
 drawtext=fontfile=${FONT}:
 text='${RECEIVER}':
-fontsize=92:
+fontsize=85:
 fontcolor=white:
 x=(w-text_w)/2:
-y=(h/2)-180:
-enable='gte(t,26)',
+y=340:
+enable='gte(t,18)',
+
 
 drawtext=fontfile=${FONT}:text='${MSG1}':
 fontsize='if(lt(t,10),32, min(36, 32 + (t-10)*3))':
