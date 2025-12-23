@@ -58,8 +58,9 @@ drawtext=fontfile=${FONT_GREAT}:text='HAPPY BIRTHDAY':
 fontsize=88:
 fontcolor=white:
 x=(w-text_w)/2:
-y=520:
-enable='gte(t,2)',
+y=460:
+enable='between(t,2,48)',
+
 
 drawtext=fontfile=${FONT}:text='${RECEIVER}':
 fontsize=72:
