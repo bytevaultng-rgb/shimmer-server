@@ -54,51 +54,53 @@ format=rgba[fx];
 
 color=black:s=1080x1920,
 
-drawtext=fontfile=${ROOT}/fonts/GreatVibes-Regular.ttf::text='HAPPY BIRTHDAY':
-fontsize=88:
-fontcolor=white:
-x=(w-text_w)/2:
-y=460:
-enable='between(t,2,48)',
-
-
-drawtext=fontfile=${FONT}:text='${RECEIVER}':
-fontsize=72:
-fontcolor=white:
-x=(w-text_w)/2:
-y=600:
+drawtext=fontfile=${ROOT}/fonts/GreatVibes-Regular.ttf:
+text='HAPPY BIRTHDAY':
+fontsize=70:fontcolor=white:
+x=(w-text_w)/2:y=500:
 enable='gte(t,2)',
 
-drawtext=fontfile=${FONT}:text='${MSG1}':
-fontsize=36:
-x=(w-text_w)/2:y=720:
-enable='gte(t,4)',
+drawtext=fontfile=${FONT}:
+text='${RECEIVER}':
+fontsize=72:fontcolor=white:
+x=(w-text_w)/2:y=590:
+enable='gte(t,2)',
 
-drawtext=fontfile=${FONT}:text='${MSG2}':
-fontsize=36:
-x=(w-text_w)/2:y=770:
+drawtext=fontfile=${FONT}:
+text='${MSG1}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=600:
 enable='gte(t,6)',
 
-drawtext=fontfile=${FONT}:text='${MSG3}':
-fontsize=36:
-x=(w-text_w)/2:y=820:
+drawtext=fontfile=${FONT}:
+text='${MSG2}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=650:
 enable='gte(t,8)',
 
-drawtext=fontfile=${FONT}:text='${MSG4}':
-fontsize=36:
-x=(w-text_w)/2:y=870:
+drawtext=fontfile=${FONT}:
+text='${MSG3}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=700:
 enable='gte(t,10)',
 
-drawtext=fontfile=${FONT}:text='${MSG5}':
-fontsize=36:
-x=(w-text_w)/2:y=920:
+drawtext=fontfile=${FONT}:
+text='${MSG4}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=750:
 enable='gte(t,12)',
 
-drawtext=fontfile=${FONT}:text='${MSG6}':
-fontsize=36:
-x=(w-text_w)/2:y=970:
+drawtext=fontfile=${FONT}:
+text='${MSG5}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=800:
 enable='gte(t,14)',
 
+drawtext=fontfile=${FONT}:
+text='${MSG6}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=850:
+enable='gte(t,16)',
 
 format=gray[textmask];
 
