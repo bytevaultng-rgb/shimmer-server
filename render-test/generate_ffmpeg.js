@@ -56,12 +56,12 @@ color=black:s=1080x1920,
 
 drawtext=fontfile=${FONT_SCRIPT}:
 text='HAPPY BIRTHDAY':
-fontsize=120:
+fontsize='110 + 10*min(1,(t-26))':
 fontcolor=white:
-spacing=6:
 x=(w-text_w)/2:
 y=(h/2)-260:
-enable='gte(t,26)',
+enable='gte(t,26)'
+
 
 drawtext=fontfile=${FONT}:
 text='${RECEIVER}':
