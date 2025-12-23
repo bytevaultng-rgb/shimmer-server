@@ -1,5 +1,5 @@
 /**
- * FINAL PRODUCTION – Sparkle Masked Text + Confetti + Music (Portrait)
+ * FINAL STABLE – Sparkle Masked Text + Music (Portrait)
  */
 
 const { exec } = require("child_process");
@@ -20,7 +20,6 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
   const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
   const FONT     = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
   const SPARKLE  = path.join(ROOT, "effects", "sparkle.mp4");
-  const CONFETTI = path.join(ROOT, "effects", "confetti.mp4");
   const MUSIC    = path.join(ROOT, "effects", "music.mp3");
 
   const OUTPUT_DIR  = path.join(ROOT, "renders");
@@ -37,8 +36,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
   if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
-
-const ffmpegCmd = `
+  const ffmpegCmd = `
 ffmpeg -y \
 -loop 1 -i "${TEMPLATE}" \
 -stream_loop -1 -i "${SPARKLE}" \
@@ -51,81 +49,73 @@ format=rgba[bg];
 
 [1:v]
 scale=1080:1920,
-format=rgba[spark];
+format=rgba[fx];
 
 color=black:s=1080x1920,
 
-/* ===== HEADING & NAME (LOWER + SPARKLED FROM START) ===== */
 drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':
 fontsize=108:fontcolor=white:
-x=(w-text_w)/2:y=520:
+x=(w-text_w)/2:y=360:
 enable='gte(t,0)',
 
 drawtext=fontfile=${FONT}:text='${RECEIVER}':
 fontsize=94:fontcolor=white:
-x=(w-text_w)/2:y=610:
+x=(w-text_w)/2:y=460:
 enable='gte(t,0)',
 
-/* ===== MESSAGE BLOCK (CENTERED & STAYS) ===== */
 drawtext=fontfile=${FONT}:text='${MSG1}':
 fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=760:
-enable='gte(t,12)',
+x=(w-text_w)/2:y=620:
+enable='gte(t,10)',
 
 drawtext=fontfile=${FONT}:text='${MSG2}':
 fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=810:
-enable='gte(t,16)',
+x=(w-text_w)/2:y=670:
+enable='gte(t,14)',
 
 drawtext=fontfile=${FONT}:text='${MSG3}':
 fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=860:
-enable='gte(t,20)',
+x=(w-text_w)/2:y=720:
+enable='gte(t,18)',
 
 drawtext=fontfile=${FONT}:text='${MSG4}':
 fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=910:
-enable='gte(t,24)',
+x=(w-text_w)/2:y=770:
+enable='gte(t,22)',
 
 drawtext=fontfile=${FONT}:text='${MSG5}':
 fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=960:
-enable='gte(t,28)',
+x=(w-text_w)/2:y=820:
+enable='gte(t,26)',
 
 drawtext=fontfile=${FONT}:text='${MSG6}':
 fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=1010:
-enable='gte(t,32)',
+x=(w-text_w)/2:y=870:
+enable='gte(t,30)',
 
 format=gray[textmask];
 
-/* ===== SPARKLE MASK ===== */
-[spark][textmask]alphamerge[textfx];
-
-/* ===== FINAL COMPOSITE + FADE ===== */
-[bg][textfx]overlay=0:0,
-fade=t=out:st=44:d=3
+[fx][textmask]alphamerge[textfx];
+[bg][textfx]overlay=0:0[outv]
 " \
--map 0:v \
+-map "[outv]" \
 -map 2:a \
--t 48 \
+-t 44 \
 -r 30 \
 -preset ultrafast \
 -crf 28 \
 -pix_fmt yuv420p \
 "${OUTPUT_FILE}"
-`.replace(/\\n/g, " ");
-
+`.replace(/\n/g, " ");
 
   console.log("▶ Rendering FINAL birthday video…");
 
   exec(ffmpegCmd, async (err, stdout, stderr) => {
-  if (stdout) console.log(stdout);
-  if (stderr) console.log(stderr);
+    if (stderr) console.log(stderr);
 
-  if (err) {
-    console.error("❌ FFmpeg failed");
-    process.exit(1);
+    if (err) {
+      console.error("❌ FFmpeg failed");
+      process.exit(1);
     }
 
     console.log("✅ Render SUCCESS:", OUTPUT_FILE);
