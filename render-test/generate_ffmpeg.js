@@ -54,7 +54,7 @@ format=rgba[fx];
 
 color=black:s=1080x1920,
 
-drawtext=fontfile=${FONT_GREAT}:text='HAPPY BIRTHDAY':
+drawtext=fontfile=${ROOT}/fonts/GreatVibes-Regular.ttf::text='HAPPY BIRTHDAY':
 fontsize=88:
 fontcolor=white:
 x=(w-text_w)/2:
