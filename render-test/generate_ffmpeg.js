@@ -54,65 +54,50 @@ format=rgba[fx];
 
 color=black:s=1080x1920,
 
-drawtext=fontfile=${ROOT}/fonts/GreatVibes-Regular.ttf:
-text='HAPPY BIRTHDAY':
-fontsize='if(lt(t,6),70, if(lt(t,6.8), 70+40*(t-6)/0.8, 110))':
-fontcolor=white:
-x=(w-text_w)/2:
-y=420:
-enable='gte(t,6)',
-
-
-drawtext=fontfile=${FONT}:
-text='${RECEIVER}':
-fontsize='if(lt(t,6.6),50, if(lt(t,7.2), 50+30*(t-6.6)/0.6, 80))':
+drawtext=fontfile=${FONT_GREAT}:text='HAPPY BIRTHDAY':
+fontsize=88:
 fontcolor=white:
 x=(w-text_w)/2:
 y=520:
-enable='gte(t,6.6)',
+enable='gte(t,2)',
 
+drawtext=fontfile=${FONT}:text='${RECEIVER}':
+fontsize=72:
+fontcolor=white:
+x=(w-text_w)/2:
+y=600:
+enable='gte(t,2)',
 
 drawtext=fontfile=${FONT}:text='${MSG1}':
-fontsize='if(lt(t,10),32, min(36, 32 + (t-10)*3))':
-fontcolor=white:
-x=(w-text_w)/2:
-y=(h/2)-20:
-enable='gte(t,10)',
+fontsize=36:
+x=(w-text_w)/2:y=720:
+enable='gte(t,4)',
 
 drawtext=fontfile=${FONT}:text='${MSG2}':
-fontsize='if(lt(t,14),32, min(36, 32 + (t-14)*3))':
-fontcolor=white:
-x=(w-text_w)/2:
-y=(h/2)+30:
-enable='gte(t,14)',
+fontsize=36:
+x=(w-text_w)/2:y=770:
+enable='gte(t,6)',
 
 drawtext=fontfile=${FONT}:text='${MSG3}':
-fontsize='if(lt(t,18),32, min(36, 32 + (t-18)*3))':
-fontcolor=white:
-x=(w-text_w)/2:
-y=(h/2)+80:
-enable='gte(t,18)',
+fontsize=36:
+x=(w-text_w)/2:y=820:
+enable='gte(t,8)',
 
 drawtext=fontfile=${FONT}:text='${MSG4}':
-fontsize='if(lt(t,22),32, min(36, 32 + (t-22)*3))':
-fontcolor=white:
-x=(w-text_w)/2:
-y=(h/2)+130:
-enable='gte(t,22)',
+fontsize=36:
+x=(w-text_w)/2:y=870:
+enable='gte(t,10)',
 
 drawtext=fontfile=${FONT}:text='${MSG5}':
-fontsize='if(lt(t,26),32, min(36, 32 + (t-26)*3))':
-fontcolor=white:
-x=(w-text_w)/2:
-y=(h/2)+180:
-enable='gte(t,26)',
+fontsize=36:
+x=(w-text_w)/2:y=920:
+enable='gte(t,12)',
 
 drawtext=fontfile=${FONT}:text='${MSG6}':
-fontsize='if(lt(t,30),32, min(36, 32 + (t-30)*3))':
-fontcolor=white:
-x=(w-text_w)/2:
-y=(h/2)+230:
-enable='gte(t,30)',
+fontsize=36:
+x=(w-text_w)/2:y=970:
+enable='gte(t,14)',
+
 
 format=gray[textmask];
 
