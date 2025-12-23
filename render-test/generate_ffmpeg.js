@@ -56,51 +56,23 @@ color=black:s=1080x1920,
 
 drawtext=fontfile=${ROOT}/fonts/PlayfairDisplay-ExtraBoldItalic.ttf:
 text='HAPPY BIRTHDAY':
-fontsize=74:fontcolor=white:
+fontsize=72:fontcolor=white:
 x=(w-text_w)/2:y=500:
 enable='gte(t,2)',
 
 drawtext=fontfile=${FONT}:
 text='${RECEIVER}':
-fontsize=72:fontcolor=white:
+fontsize=90:fontcolor=white:
 x=(w-text_w)/2:y=580:
 enable='gte(t,2)',
 
-drawtext=fontfile=${FONT}:
-text='${MSG1}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=620:
-enable='gte(t,6)',
+drawtext=fontfile=${FONT}:text='${MSG1}':fontsize=36:x=(w-text_w)/2:y=620:enable='gte(t,6)',
+drawtext=fontfile=${FONT}:text='${MSG2}':fontsize=36:x=(w-text_w)/2:y=670:enable='gte(t,8)',
+drawtext=fontfile=${FONT}:text='${MSG3}':fontsize=36:x=(w-text_w)/2:y=720:enable='gte(t,10)',
+drawtext=fontfile=${FONT}:text='${MSG4}':fontsize=36:x=(w-text_w)/2:y=770:enable='gte(t,12)',
+drawtext=fontfile=${FONT}:text='${MSG5}':fontsize=36:x=(w-text_w)/2:y=820:enable='gte(t,14)',
+drawtext=fontfile=${FONT}:text='${MSG6}':fontsize=36:x=(w-text_w)/2:y=870:enable='gte(t,16)',
 
-drawtext=fontfile=${FONT}:
-text='${MSG2}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=670:
-enable='gte(t,8)',
-
-drawtext=fontfile=${FONT}:
-text='${MSG3}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=720:
-enable='gte(t,10)',
-
-drawtext=fontfile=${FONT}:
-text='${MSG4}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=770:
-enable='gte(t,12)',
-
-drawtext=fontfile=${FONT}:
-text='${MSG5}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=820:
-enable='gte(t,14)',
-
-drawtext=fontfile=${FONT}:
-text='${MSG6}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=870:
-enable='gte(t,16)',
 
 format=gray[textmask];
 
