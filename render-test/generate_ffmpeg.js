@@ -44,31 +44,67 @@ ffmpeg -y \
 -stream_loop -1 -i "${CONFETTI}" \
 -stream_loop -1 -i "${MUSIC}" \
 -filter_complex "
-[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,
-pad=1080:1920:(ow-iw)/2:(oh-ih)/2,format=rgba[bg];
+[0:v]
+scale=1080:1920:force_original_aspect_ratio=decrease,
+pad=1080:1920:(ow-iw)/2:(oh-ih)/2,
+format=rgba[bg];
 
-[1:v]scale=1080:1920,format=rgba[spark];
-[2:v]scale=1080:1920,chromakey=0x00FF00:0.20:0.10,format=rgba[conf];
+[1:v]
+scale=1080:1920,
+format=rgba[spark];
 
 color=black:s=1080x1920,
-drawtext=fontfile=${FONT}:text='${MSG1}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=640:enable='gte(t,12)',
-drawtext=fontfile=${FONT}:text='${MSG2}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=690:enable='gte(t,16)',
-drawtext=fontfile=${FONT}:text='${MSG3}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=740:enable='gte(t,20)',
-drawtext=fontfile=${FONT}:text='${MSG4}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=790:enable='gte(t,24)',
-drawtext=fontfile=${FONT}:text='${MSG5}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=840:enable='gte(t,28)',
-drawtext=fontfile=${FONT}:text='${MSG6}':fontsize=36:fontcolor=white:x=(w-text_w)/2:y=890:enable='gte(t,32)',
 
-drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':fontsize=108:fontcolor=white:x=(w-text_w)/2:y=300:enable='gte(t,26)',
-drawtext=fontfile=${FONT}:text='${RECEIVER}':fontsize=94:fontcolor=white:x=(w-text_w)/2:y=390:enable='gte(t,26)',
+
+drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':
+fontsize=110:fontcolor=white:
+x=(w-text_w)/2:y=520:
+enable='gte(t,0)',
+
+drawtext=fontfile=${FONT}:text='${RECEIVER}':
+fontsize=96:fontcolor=white:
+x=(w-text_w)/2:y=620:
+enable='gte(t,0)',
+
+
+drawtext=fontfile=${FONT}:text='${MSG1}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=760:
+enable='gte(t,12)',
+
+drawtext=fontfile=${FONT}:text='${MSG2}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=810:
+enable='gte(t,16)',
+
+drawtext=fontfile=${FONT}:text='${MSG3}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=860:
+enable='gte(t,20)',
+
+drawtext=fontfile=${FONT}:text='${MSG4}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=910:
+enable='gte(t,24)',
+
+drawtext=fontfile=${FONT}:text='${MSG5}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=960:
+enable='gte(t,28)',
+
+drawtext=fontfile=${FONT}:text='${MSG6}':
+fontsize=36:fontcolor=white:
+x=(w-text_w)/2:y=1010:
+enable='gte(t,32)',
 
 format=gray[textmask];
 
+
 [spark][textmask]alphamerge[textfx];
 
-[bg][conf]overlay=0:0[tmp1];
-[tmp1][textfx]overlay=0:0[tmp2];
+[bg][textfx]overlay=0:0,
+fade=t=out:st=44:d=3
 
-[tmp2]fade=t=out:st=44:d=3[outv]
 " \
 -map "[outv]" \
 -map 3:a \
