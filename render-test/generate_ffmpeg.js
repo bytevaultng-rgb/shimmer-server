@@ -100,7 +100,7 @@ format=gray[textmask];
 " \
 -map "[outv]" \
 -map 2:a \
--t 44 \
+-t 48 \
 -r 30 \
 -preset ultrafast \
 -crf 28 \
