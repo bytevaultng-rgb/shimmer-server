@@ -37,11 +37,11 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
   if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
+
 const ffmpegCmd = `
 ffmpeg -y \
 -loop 1 -i "${TEMPLATE}" \
 -stream_loop -1 -i "${SPARKLE}" \
--stream_loop -1 -i "${CONFETTI}" \
 -stream_loop -1 -i "${MUSIC}" \
 -filter_complex "
 [0:v]
@@ -55,18 +55,18 @@ format=rgba[spark];
 
 color=black:s=1080x1920,
 
-
+/* ===== HEADING & NAME (LOWER + SPARKLED FROM START) ===== */
 drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':
-fontsize=110:fontcolor=white:
+fontsize=108:fontcolor=white:
 x=(w-text_w)/2:y=520:
 enable='gte(t,0)',
 
 drawtext=fontfile=${FONT}:text='${RECEIVER}':
-fontsize=96:fontcolor=white:
-x=(w-text_w)/2:y=620:
+fontsize=94:fontcolor=white:
+x=(w-text_w)/2:y=610:
 enable='gte(t,0)',
 
-
+/* ===== MESSAGE BLOCK (CENTERED & STAYS) ===== */
 drawtext=fontfile=${FONT}:text='${MSG1}':
 fontsize=36:fontcolor=white:
 x=(w-text_w)/2:y=760:
@@ -99,15 +99,15 @@ enable='gte(t,32)',
 
 format=gray[textmask];
 
-
+/* ===== SPARKLE MASK ===== */
 [spark][textmask]alphamerge[textfx];
 
+/* ===== FINAL COMPOSITE + FADE ===== */
 [bg][textfx]overlay=0:0,
 fade=t=out:st=44:d=3
-
 " \
--map "[outv]" \
--map 3:a \
+-map 0:v \
+-map 2:a \
 -t 48 \
 -r 30 \
 -preset ultrafast \
@@ -115,6 +115,7 @@ fade=t=out:st=44:d=3
 -pix_fmt yuv420p \
 "${OUTPUT_FILE}"
 `.replace(/\\n/g, " ");
+
 
   console.log("▶ Rendering FINAL birthday video…");
 
