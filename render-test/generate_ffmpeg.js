@@ -21,11 +21,12 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
   const FONT     = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
   const SPARKLE  = path.join(ROOT, "effects", "sparkle.mp4");
   const MUSIC    = path.join(ROOT, "effects", "music.mp3");
-
+  const FONT_SCRIPT = path.join(ROOT, "fonts", "GreatVibes-Regular.ttf");
+ 
   const OUTPUT_DIR  = path.join(ROOT, "renders");
   const OUTPUT_FILE = path.join(OUTPUT_DIR, "birthday_final.mp4");
 
-  const RECEIVER = "IFEOMA";
+  const RECEIVER = "IFEOMA THE BLESSED";
 
   const MSG1 = "Your vision lights the way for many.";
   const MSG2 = "You lead with purpose, strength, and heart.";
@@ -53,44 +54,63 @@ format=rgba[fx];
 
 color=black:s=1080x1920,
 
-drawtext=fontfile=${FONT}:text='HAPPY BIRTHDAY':
-fontsize=108:fontcolor=white:
-x=(w-text_w)/2:y=360:
-enable='gte(t,0)',
+drawtext=fontfile=${FONT_SCRIPT}:
+text='HAPPY BIRTHDAY':
+fontsize=120:
+fontcolor=white:
+spacing=6:
+x=(w-text_w)/2:
+y=(h/2)-260:
+enable='gte(t,26)',
 
-drawtext=fontfile=${FONT}:text='${RECEIVER}':
-fontsize=94:fontcolor=white:
-x=(w-text_w)/2:y=460:
-enable='gte(t,0)',
+drawtext=fontfile=${FONT}:
+text='${RECEIVER}':
+fontsize=92:
+fontcolor=white:
+x=(w-text_w)/2:
+y=(h/2)-180:
+enable='gte(t,26)',
 
 drawtext=fontfile=${FONT}:text='${MSG1}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=620:
+fontsize='if(lt(t,10),32, min(36, 32 + (t-10)*3))':
+fontcolor=white:
+x=(w-text_w)/2:
+y=(h/2)-20:
 enable='gte(t,10)',
 
 drawtext=fontfile=${FONT}:text='${MSG2}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=670:
+fontsize='if(lt(t,14),32, min(36, 32 + (t-14)*3))':
+fontcolor=white:
+x=(w-text_w)/2:
+y=(h/2)+30:
 enable='gte(t,14)',
 
 drawtext=fontfile=${FONT}:text='${MSG3}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=720:
+fontsize='if(lt(t,18),32, min(36, 32 + (t-18)*3))':
+fontcolor=white:
+x=(w-text_w)/2:
+y=(h/2)+80:
 enable='gte(t,18)',
 
 drawtext=fontfile=${FONT}:text='${MSG4}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=770:
+fontsize='if(lt(t,22),32, min(36, 32 + (t-22)*3))':
+fontcolor=white:
+x=(w-text_w)/2:
+y=(h/2)+130:
 enable='gte(t,22)',
 
 drawtext=fontfile=${FONT}:text='${MSG5}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=820:
+fontsize='if(lt(t,26),32, min(36, 32 + (t-26)*3))':
+fontcolor=white:
+x=(w-text_w)/2:
+y=(h/2)+180:
 enable='gte(t,26)',
 
 drawtext=fontfile=${FONT}:text='${MSG6}':
-fontsize=36:fontcolor=white:
-x=(w-text_w)/2:y=870:
+fontsize='if(lt(t,30),32, min(36, 32 + (t-30)*3))':
+fontcolor=white:
+x=(w-text_w)/2:
+y=(h/2)+230:
 enable='gte(t,30)',
 
 format=gray[textmask];
@@ -99,7 +119,8 @@ format=gray[textmask];
 [bg][textfx]overlay=0:0[outv]
 " \
 -map "[outv]" \
--map 2:a \
+-map 3:a \
+-af "afade=t=out:st=45:d=3"
 -t 48 \
 -r 30 \
 -preset ultrafast \
@@ -119,6 +140,9 @@ format=gray[textmask];
     }
 
     console.log("✅ Render SUCCESS:", OUTPUT_FILE);
+    
+     console.log("Using font:", FONT_SCRIPT);
+
 
     const s3 = new S3Client({
       region: "auto",
