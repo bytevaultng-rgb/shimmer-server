@@ -54,13 +54,12 @@ format=rgba[fx];
 
 color=black:s=1080x1920,
 
-drawtext=fontfile=${ROOT}/fonts/GreatVibes-Regular.ttf:
-text='HAPPY BIRTHDAY':
-fontsize=100:
+drawtext=fontfile=${FONT_SCRIPT}:text='HAPPY BIRTHDAY':
+fontsize='if(t<6,0, if(t<6.8, 70+40*(t-6)/0.8, 110))':
 fontcolor=white:
 x=(w-text_w)/2:
-y=260:
-enable='gte(t,18)',
+y=420:
+enable='gte(t,6)',
 
 
 drawtext=fontfile=${FONT}:
