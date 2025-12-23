@@ -119,7 +119,7 @@ format=gray[textmask];
 [bg][textfx]overlay=0:0[outv]
 " \
 -map "[outv]" \
--map 3:a \
+-map 2:a \
 -af "afade=t=out:st=45:d=3"
 -t 48 \
 -r 30 \
