@@ -54,70 +54,39 @@ format=rgba[fx];
 
 color=black:s=1080x1920,
 
-drawtext=fontfile=${ROOT}/fonts/PlayfairDisplay-ExtraBoldItalic.ttf:
+
+drawtext=fontfile=${FONT_SCRIPT}:
 text='HAPPY BIRTHDAY':
-fontsize=72:fontcolor=white:
-x=(w-text_w)/2:y=500:
+fontsize=48:fontcolor=white:
+x=(w-text_w)/2:y=560:
 enable='gte(t,2)',
+
 
 drawtext=fontfile=${FONT}:
 text='${RECEIVER}':
-fontsize=90:fontcolor=white:
-x=(w-text_w)/2:y=580:
-enable='gte(t,2)',
-
-
-drawtext=fontfile=${FONT}:text='${MSG1}':
-fontsize=42:fontcolor=white:
-x=(w-text_w)/2:y=(h/2):
-enable='between(t,12,16)',
-
-drawtext=fontfile=${FONT}:text='${MSG2}':
-fontsize=42:fontcolor=white:
-x=(w-text_w)/2:y=(h/2):
-enable='between(t,16,20)',
-
-drawtext=fontfile=${FONT}:text='${MSG3}':
-fontsize=42:fontcolor=white:
-x=(w-text_w)/2:y=(h/2):
-enable='between(t,20,24)',
-
-drawtext=fontfile=${FONT}:text='${MSG4}':
-fontsize=42:fontcolor=white:
-x=(w-text_w)/2:y=(h/2):
-enable='between(t,24,27)',
-
-drawtext=fontfile=${ROOT}/fonts/PlayfairDisplay-ExtraBoldItalic.ttf:
-text='HAPPY BIRTHDAY':
-fontsize=72:fontcolor=white:
-x=(w-text_w)/2:y=500:
-enable='gte(t,2)',
-
-drawtext=fontfile=${FONT}:
-text='${RECEIVER}':
-fontsize=90:fontcolor=white:
-x=(w-text_w)/2:y=580:
-enable='gte(t,2)',
+fontsize=96:fontcolor=white:
+x=(w-text_w)/2:y=660:
+enable='gte(t,2)'
 
 drawtext=fontfile=${FONT}:text='${MSG1}':
-fontsize=42:fontcolor=white:
-x=(w-text_w)/2:y=(h/2)-40:
-enable='gte(t,27)',
+fontsize=40:fontcolor=white:
+x=(w-text_w)/2:y=760:
+enable='gte(t,12)',
 
 drawtext=fontfile=${FONT}:text='${MSG2}':
-fontsize=42:fontcolor=white:
-x=(w-text_w)/2:y=(h/2)+10:
-enable='gte(t,27)',
+fontsize=40:fontcolor=white:
+x=(w-text_w)/2:y=810:
+enable='gte(t,16)',
 
 drawtext=fontfile=${FONT}:text='${MSG3}':
-fontsize=42:fontcolor=white:
-x=(w-text_w)/2:y=(h/2)+60:
-enable='gte(t,27)',
+fontsize=40:fontcolor=white:
+x=(w-text_w)/2:y=860:
+enable='gte(t,20)',
 
 drawtext=fontfile=${FONT}:text='${MSG4}':
-fontsize=42:fontcolor=white:
-x=(w-text_w)/2:y=(h/2)+110:
-enable='gte(t,27)',
+fontsize=40:fontcolor=white:
+x=(w-text_w)/2:y=910:
+enable='gte(t,24)',
 
 format=gray[textmask];
 
@@ -126,8 +95,7 @@ format=gray[textmask];
 " \
 -map "[outv]" \
 -map 2:a \
--af "afade=t=out:st=45:d=3"
--t 48 \
+-shortest \
 -r 30 \
 -preset ultrafast \
 -crf 28 \
