@@ -1,160 +1,160 @@
 /**
- * FINAL STABLE – Sparkle Masked Text + Music (Portrait)
+ * PRODUCTION – Premium Sparkle Birthday Video
+ * PNG + MP4 Background + Alpha Sparkle Mask
  */
 
-const { exec } = require("child_process");
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+import { spawn, execSync } from "child_process";
+import fs from "fs";
 
-(async () => {
-  if (!process.env.RUN_RENDER) {
-    console.log("RUN_RENDER not set. Idle.");
-    setInterval(() => {}, 60000);
-    return;
-  }
+const WIDTH = 1080;
+const HEIGHT = 1920;
+const FPS = 30;
+const DURATION = 48;
 
-  const ROOT = __dirname;
-
-const TEMPLATE = path.join(ROOT, "templates", "HBD.png");
-const FONT     = path.join(ROOT, "fonts", "Tourney-Bold.ttf");
-const SPARKLE  = path.join(ROOT, "effects", "sparkle.mp4");
-const MUSIC    = path.join(ROOT, "effects", "music.mp3");
-const FONT_SCRIPT = path.join(ROOT, "fonts", "PlayfairDisplay-ExtraBoldItalic.ttf");
-
-
+const ROOT = process.cwd();
 const OUTPUT_DIR = "/var/data/renders";
-const OUTPUT_FILE = `${OUTPUT_DIR}/birthday_final.mp4`;
+if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
-if (!fs.existsSync(OUTPUT_DIR)) {
-  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-}
+const OUTPUT = `premium_${Date.now()}.mp4`;
 
-if (global.__RENDER_ALREADY_RAN__) {
-  console.log("⚠️ Render already executed, skipping.");
-  process.exit(0);
-}
-global.__RENDER_ALREADY_RAN__ = true;
+/* ---------- ASSETS ---------- */
+const PNG_TEMPLATE = "/work/templates/HBD.png";
+const VIDEO_BG     = "/work/templates/background.mp4";
+const PARTICLES    = "/work/effects/golden_particles_alpha.mov";
+const MUSIC        = "/work/effects/music.mp3";
 
+const FONT_TITLE = "/work/fonts/PlayfairDisplay-ExtraBoldItalic.ttf";
+const FONT_BODY  = "/work/fonts/Tourney-Bold.ttf";
+const FONT_SIGN  = "/work/fonts/GreatVibes-Regular.ttf";
 
-  const RECEIVER = "IFEOMA THE BLESSED";
+/* ---------- TEXT ---------- */
+const TITLE = "HAPPY BIRTHDAY";
+const RECEIVER = "IFEOMA THE BLESSED";
+const SENDER = "— From Maryam";
 
-  const MSG1 = "Your vision lights the way for many.";
-  const MSG2 = "You lead with purpose, strength, and heart.";
-  const MSG3 = "Thank you for inspiring excellence through action.";
-  const MSG4 = "May this new year bring joy, growth, and victories.";
-  const MSG5 = "Wishing you fulfillment, impact, and greatness.";
-  const MSG6 = "May your impact continue to shape generations.";
+const LINES = [
+  "Your vision lights the way for many.",
+  "You lead with purpose, strength, and heart.",
+  "Thank you for inspiring excellence through action.",
+  "May this new year bring joy, growth, and victories.",
+  "Wishing you fulfillment, impact, and greatness.",
+  "May your influence shape generations."
+];
 
-  if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+/* ---------- LAYOUT ---------- */
+const Y_TITLE = 360;
+const Y_NAME  = 445;
+const BODY_START = 610;
+const LINE_GAP = 50;
 
-  const ffmpegCmd = `
-ffmpeg -y \
--loop 1 -i "${TEMPLATE}" \
--stream_loop -1 -i "${SPARKLE}" \
--stream_loop -1 -i "${MUSIC}" \
--filter_complex "
-[0:v]
-scale=1080:1920:force_original_aspect_ratio=decrease,
-pad=1080:1920:(ow-iw)/2:(oh-ih)/2,
-format=rgba[bg];
+/* ---------- FFmpeg (Docker) ---------- */
+const cmd = [
+  "run", "--rm",
+  "-v", `${ROOT}/render-test:/work`,
+  "-v", `${OUTPUT_DIR}:/out`,
+  "jrottenberg/ffmpeg:latest",
 
-[1:v]
-scale=1080:1920,
-format=rgba[fx];
+  // Inputs
+  "-loop", "1", "-i", PNG_TEMPLATE,
+  "-stream_loop", "-1", "-i", VIDEO_BG,
+  "-stream_loop", "-1", "-i", PARTICLES,
+  "-i", MUSIC,
 
-color=black:s=1080x1920,
+  "-filter_complex",
+  `
+/* ---- BASE BACKGROUND ---- */
+[1:v]scale=${WIDTH}:${HEIGHT},format=rgba[vidbg];
+[0:v]scale=${WIDTH}:${HEIGHT},format=rgba[pngbg];
+[vidbg][pngbg]overlay=0:0:format=auto[bg];
 
+/* ---- SPARKLE SOURCE ---- */
+[2:v]scale=${WIDTH}:${HEIGHT},format=rgba[fx];
 
-drawtext=fontfile=${ROOT}/fonts/PlayfairDisplay-ExtraBoldItalic.ttf:
-text='HAPPY BIRTHDAY':
-fontsize=72:fontcolor=white:
-x=(w-text_w)/2:y=500:
-enable='gte(t,2)',
+/* ---- TEXT MASK ---- */
+color=black@0.0:s=${WIDTH}x${HEIGHT}:d=${DURATION},
 
-drawtext=fontfile=${FONT}:
+drawtext=fontfile=${FONT_TITLE}:
+text='${TITLE}':
+fontsize=62:
+fontcolor=white:
+x=(w-text_w)/2:
+y=${Y_TITLE}:
+enable='gte(t,1)',
+
+drawtext=fontfile=${FONT_BODY}:
 text='${RECEIVER}':
-fontsize=96:fontcolor=white:
-x=(w-text_w)/2:y=660:
+fontsize=82:
+fontcolor=white:
+x=(w-text_w)/2:
+y=${Y_NAME}:
 enable='gte(t,2)',
 
-drawtext=fontfile=${FONT}:text='${MSG1}':
-fontsize=40:fontcolor=white:
-x=(w-text_w)/2:y=760:
-enable='gte(t,12)',
+${LINES.map((line, i) => `
+drawtext=fontfile=${FONT_BODY}:
+text='${line}':
+fontsize=38:
+fontcolor=white:
+x=(w-text_w)/2:
+y=${BODY_START + i * LINE_GAP}:
+enable='gte(t,${6 + i * 2})'
+`).join(",")},
 
-drawtext=fontfile=${FONT}:text='${MSG2}':
-fontsize=40:fontcolor=white:
-x=(w-text_w)/2:y=810:
-enable='gte(t,16)',
-
-drawtext=fontfile=${FONT}:text='${MSG3}':
-fontsize=40:fontcolor=white:
-x=(w-text_w)/2:y=860:
-enable='gte(t,20)',
-
-drawtext=fontfile=${FONT}:text='${MSG4}':
-fontsize=40:fontcolor=white:
-x=(w-text_w)/2:y=910:
+drawtext=fontfile=${FONT_SIGN}:
+text='${SENDER}':
+fontsize=42:
+fontcolor=white@0.9:
+x=(w-text_w)/2:
+y=${BODY_START + LINES.length * LINE_GAP + 70}:
 enable='gte(t,24)',
 
 format=gray[textmask];
 
+/* ---- MASK + COMPOSE ---- */
 [fx][textmask]alphamerge[textfx];
-[bg][textfx]overlay=0:0[outv]
-" \
--map "[outv]" \
--map 2:a \
--t 48 \
--shortest \
--r 30 \
--preset ultrafast \
--crf 28 \
--pix_fmt yuv420p \
-"${OUTPUT_FILE}"
-`.replace(/\n/g, " ");
+[bg][textfx]overlay=0:0,
+unsharp=5:5:0.8,
+fade=t=out:st=${DURATION-3}:d=3[v];
 
-  console.log("▶ Rendering FINAL birthday video…");
+/* ---- AUDIO ---- */
+[3:a]atrim=0:${DURATION},asetpts=N/SR[a]
+`.replace(/\n/g, ""),
 
-  exec(ffmpegCmd, async (err, stdout, stderr) => {
-  if (stderr && !err) {
-    console.log("ℹ️ FFmpeg log:", stderr);
+  "-map", "[v]",
+  "-map", "[a]",
+  "-r", `${FPS}`,
+  "-t", `${DURATION}`,
+  "-c:v", "libx264",
+  "-crf", "21",
+  "-preset", "medium",
+  "-pix_fmt", "yuv420p",
+  "-movflags", "+faststart",
+  "-shortest",
+  `/out/${OUTPUT}`
+];
+
+/* ---------- RUN ---------- */
+console.log("🎬 Rendering PREMIUM sparkle video…");
+const ff = spawn("docker", cmd, { stdio: "inherit" });
+
+ff.on("exit", (code) => {
+  if (code !== 0) {
+    console.error("❌ Render failed");
+    return;
   }
 
-  if (err) {
-    console.error("❌ FFmpeg failed");
-    process.exit(1);
-  }
+  console.log("✅ Render complete");
 
-  console.log("✅ Render SUCCESS:", OUTPUT_FILE);
-  console.log("Using font:", FONT_SCRIPT);
+  const localPath = `${OUTPUT_DIR}/${OUTPUT}`;
+  const bucket = "bytevaultng-previews";
+  const region = "eu-north-1";
+  const key = `previews/${OUTPUT}`;
 
-  const s3 = new S3Client({
-    region: "auto",
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: process.env.R2_ACCESS_KEY_ID,
-      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-    },
-  });
-
-  const buffer = fs.readFileSync(OUTPUT_FILE);
-  const key = `renders/birthday_${Date.now()}_${crypto.randomBytes(4).toString("hex")}.mp4`;
-
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: process.env.R2_BUCKET,
-      Key: key,
-      Body: buffer,
-      ContentType: "video/mp4",
-    })
+  console.log("⬆️ Uploading preview to S3…");
+  execSync(
+    `aws s3 cp ${localPath} s3://${bucket}/${key} --region ${region}`,
+    { stdio: "inherit" }
   );
 
-  console.log("🎉 UPLOAD SUCCESS");
-  console.log("PUBLIC LINK:", `${process.env.R2_PUBLIC_BASE}/${key}`);
-  console.log("🛑 Job complete. Exiting.");
-
-  process.exit(0);
+  console.log("🎉 PREVIEW READY");
+  console.log(`🔗 https://${bucket}.s3.${region}.amazonaws.com/${key}`);
 });
-})();
